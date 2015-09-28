@@ -49,7 +49,7 @@ PerformanceTestClient.prototype.state = function() {
 
 var clients = []
 
-	for (var i=0; i < 100; ++i) {
+for (var i=0; i < constants.TOTAL_CLIENTS; ++i) {
 	var client = new PerformanceTestClient()
 	client.start()
 	clients.push(client)

@@ -4,11 +4,14 @@ var constants = require("./constants.js")
 
 function FakeKafkaHelper() {
 	this.fakeOffSet = 0
+	this.numOfSubscribes = 0
 }
 
 FakeKafkaHelper.prototype.__proto__ = events.EventEmitter.prototype;
 
 FakeKafkaHelper.prototype.subscribe = function(topic, fromOffset, cb) {
+	++this.numOfSubscribes
+
 	this.emit("subscribed", topic, this.fakeOffSet)
 	if (cb) {
 		cb(topic, this.fakeOffSet)
@@ -23,6 +26,11 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 }
 
 FakeKafkaHelper.prototype.sendNextMessage = function() {
+
+	// Do not send data until all clients have subscribed
+	if (this.numOfSubscribes < constants.TOTAL_CLIENTS) {
+		return
+	}
 
 	var exampleData = {
 		b: [[5.5,24608],[5.495,97408],[5.49,51101],[5.485,67982],[5.48,44765]],
