@@ -24,12 +24,8 @@ function PerformanceTestClient() {
 			constants.STREAM_ID,
 			function (message, streamId, counter) {
 				++that.numOfMessagesReceived
-				//console.log("*")
 			},
-			{
-				resend_all: false,
-				resend_last: 0
-			}
+			{}
 	)
 }
 
@@ -44,7 +40,6 @@ PerformanceTestClient.prototype.state = function() {
 		numOfMessagesReceived: this.numOfMessagesReceived
 	}
 }
-
 
 
 var clients = []
@@ -73,4 +68,3 @@ process.on("SIGINT", function() {
 	console.log("Numbers of messages received " + numOfMessagesReceivedPerClient)
 	process.exit()
 })
-

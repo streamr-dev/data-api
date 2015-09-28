@@ -2,6 +2,7 @@ var events = require('events')
 var SocketIoServer = require('../lib/socketio-server').SocketIoServer
 var constants = require("./constants.js")
 
+
 function FakeKafkaHelper() {
 	this.fakeOffSet = 0
 	this.numOfSubscribes = 0
@@ -45,18 +46,19 @@ FakeKafkaHelper.prototype.sendNextMessage = function() {
 	}
 }
 
+
 var kafkaHelper = new FakeKafkaHelper()
 var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
 
-function sendMessage() {
+function startMessageSendingLoop() {
 	kafkaHelper.sendNextMessage()
 
 	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES_TO_SEND) {
 		console.log("info: all messages have been sent")
 	} else {
-		setTimeout(sendMessage, constants.MESSAGE_RATE_IN_MILLIS)
+		setTimeout(startMessageSendingLoop, constants.MESSAGE_RATE_IN_MILLIS)
 	}
 }
 
 console.log("Server started on port " + constants.SERVER_PORT)
-sendMessage()
+startMessageSendingLoop()
