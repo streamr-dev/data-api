@@ -1,9 +1,6 @@
 global.io = require("socket.io-client")
 var StreamrClient = require("./lib/streamr-client/streamr-client.js").StreamrClient
-
-
-var serverUrl = "http://dev.unifina:8889"
-var streamId = "1ef8TbyGTFiAlZ8R2gCaJw"
+var constants = require("./constants.js")
 
 
 function PerformanceTestClient() {
@@ -14,7 +11,7 @@ function PerformanceTestClient() {
 	var that = this;
 
 	this.client = new StreamrClient({
-		server: serverUrl,
+		server: constants.SERVER_URL,
 		autoConnect: false,
 		autoDisconnect: true
 	})
@@ -24,14 +21,15 @@ function PerformanceTestClient() {
 	})
 
 	this.client.subscribe(
-			streamId,
-
+			constants.STREAM_ID,
 			function (message, streamId, counter) {
 				++that.numOfMessagesReceived
 				//console.log("*")
 			},
-
-			{}
+			{
+				resend_all: false,
+				resend_last: 0
+			}
 	)
 }
 
@@ -39,18 +37,19 @@ PerformanceTestClient.prototype.start = function() {
 	this.client.connect()
 }
 
-
 PerformanceTestClient.prototype.state = function() {
 	return {
 		didConnect: this.isConnected,
-		didSubscribe: this.client.subsByStream[streamId][0].subscribed,
+		didSubscribe: this.client.subsByStream[constants.STREAM_ID][0].subscribed,
 		numOfMessagesReceived: this.numOfMessagesReceived
 	}
 }
 
+
+
 var clients = []
 
-for (var i=0; i < 300; ++i) {
+	for (var i=0; i < 100; ++i) {
 	var client = new PerformanceTestClient()
 	client.start()
 	clients.push(client)
