@@ -27,19 +27,22 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 
 FakeKafkaHelper.prototype.sendNextMessage = function() {
 
-	// Do not send data until all clients have subscribed
-	if (this.numOfSubscribes < constants.TOTAL_CLIENTS) {
+	// Send data when all clients have subscribed
+	if (this.numOfSubscribes ==  constants.TOTAL_CLIENTS) {
+		var exampleData = {
+			b: [[5.5,24608],[5.495,97408],[5.49,51101],[5.485,67982],[5.48,44765]],
+			s: [[5.505,34631],[5.51,100912],[5.515,75603],[5.52,99476],[5.525,48575]],
+			_S: constants.STREAM_ID,
+			_C: this.fakeOffSet++
+		}
+
+		kafkaHelper.emit('message', exampleData, constants.STREAM_ID)
+	} else if (this.numOfSubscribes > constants.TOTAL_CLIENTS) {
+		console.log("error: more clients subscribed than expected")
+		process.kill()
+	} else {
 		return
 	}
-
-	var exampleData = {
-		b: [[5.5,24608],[5.495,97408],[5.49,51101],[5.485,67982],[5.48,44765]],
-		s: [[5.505,34631],[5.51,100912],[5.515,75603],[5.52,99476],[5.525,48575]],
-		_S: constants.STREAM_ID,
-		_C: this.fakeOffSet++
-	}
-
-	kafkaHelper.emit('message', exampleData, constants.STREAM_ID)
 }
 
 var kafkaHelper = new FakeKafkaHelper()
@@ -47,7 +50,12 @@ var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
 
 function sendMessage() {
 	kafkaHelper.sendNextMessage()
-	setTimeout(sendMessage, constants.MESSAGE_RATE_IN_MILLIS)
+
+	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES_TO_SEND) {
+		console.log("info: all messages have been sent")
+	} else {
+		setTimeout(sendMessage, constants.MESSAGE_RATE_IN_MILLIS)
+	}
 }
 
 console.log("Server started on port " + constants.SERVER_PORT)
