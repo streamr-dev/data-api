@@ -1,3 +1,16 @@
+/*
+ * An instance of the streamr-socket-server with the following qualities:
+ *   a) Kafka connection is faked with an in-memory object
+ *
+ *   b) sends a predefined amount of messages in a predefined rate on a
+ *   predefined channel/topic
+ *
+ *   c) starts sending messages only when a predefined amount of subscriptions
+ *   have occurred.
+ *
+ *   d) if more subscriptions occur than was expected, server exits.
+ */
+
 var events = require('events')
 var colors = require("colors")
 var SocketIoServer = require('../lib/socketio-server').SocketIoServer
