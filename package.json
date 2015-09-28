@@ -20,6 +20,7 @@
   "devDependencies": {
     "mocha": "*",
     "mockery": "*",
-    "buffermaker": "*"
+    "buffermaker": "*",
+    "socket.io-client": "*"
   }
 }

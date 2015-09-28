@@ -1,0 +1,3 @@
+[submodule "performance-test/lib/streamr-client"]
+	path = performance-test/lib/streamr-client
+	url = git@github.com:Unifina/streamr-client.git
