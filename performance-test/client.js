@@ -44,10 +44,15 @@ PerformanceTestClient.prototype.state = function() {
 
 var clients = []
 
-for (var i=0; i < constants.TOTAL_CLIENTS; ++i) {
+function createAndConnectClient() {
 	var client = new PerformanceTestClient()
 	client.start()
-	clients.push(client)
+	clients.push(client) // Var `clients` outside scope
+
+	if (clients.length < constants.TOTAL_CLIENTS) {
+		setTimeout(createAndConnectClient,
+				constants.TIMEOUT_BETWEEN_CLIENTS_IN_MILLIS)
+	}
 }
 
 process.on("SIGINT", function() {
@@ -68,3 +73,5 @@ process.on("SIGINT", function() {
 	console.log("Numbers of messages received " + numOfMessagesReceivedPerClient)
 	process.exit()
 })
+
+createAndConnectClient()

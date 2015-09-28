@@ -1,4 +1,5 @@
 var events = require('events')
+var colors = require("colors")
 var SocketIoServer = require('../lib/socketio-server').SocketIoServer
 var constants = require("./constants.js")
 
@@ -39,7 +40,7 @@ FakeKafkaHelper.prototype.sendNextMessage = function() {
 
 		kafkaHelper.emit('message', exampleData, constants.STREAM_ID)
 	} else if (this.numOfSubscribes > constants.TOTAL_CLIENTS) {
-		console.log("error: more clients subscribed than expected")
+		console.log("error: more clients subscribed than expected".red)
 		process.kill()
 	} else {
 		return
@@ -54,7 +55,7 @@ function startMessageSendingLoop() {
 	kafkaHelper.sendNextMessage()
 
 	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES_TO_SEND) {
-		console.log("info: all messages have been sent")
+		console.log("info: all messages have been sent".green)
 	} else {
 		setTimeout(startMessageSendingLoop, constants.MESSAGE_RATE_IN_MILLIS)
 	}

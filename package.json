@@ -21,6 +21,7 @@
     "mocha": "*",
     "mockery": "*",
     "buffermaker": "*",
-    "socket.io-client": "*"
+    "socket.io-client": "*",
+    "colors": "*"
   }
 }
