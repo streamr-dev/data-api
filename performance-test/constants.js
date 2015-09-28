@@ -8,6 +8,7 @@ function define(name, value) {
 define("SERVER_PORT", 8889);
 define("SERVER_URL", "http://localhost:8889");
 define("STREAM_ID", "testStreamId");
+define("MESSAGE_RATE_IN_MILLIS", 100)
 
 // define("SERVER_URL", "http://dev.unifina:8889");
 // define("STREAM_ID", "1ef8TbyGTFiAlZ8R2gCaJw"); // Front page demo

@@ -39,7 +39,7 @@ var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
 
 function sendMessage() {
 	kafkaHelper.sendNextMessage()
-	setTimeout(sendMessage, 1000)
+	setTimeout(sendMessage, constants.MESSAGE_RATE_IN_MILLIS)
 }
 
 console.log("Server started on port " + constants.SERVER_PORT)
