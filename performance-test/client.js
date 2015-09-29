@@ -80,11 +80,16 @@ process.on("SIGINT", function() {
 		minLatency = Math.min(minLatency, client.minTimeDiff)
 	})
 
+	// Mean of means not a problem because subsamples should be of equal size
+	var grandMean = meanLatencies.reduce(function(sum, val) {
+		return sum + val
+	}, 0) / meanLatencies.length
+
 	console.log("Number of connects " + numOfConnects)
 	console.log("Number of subscribes " + numOfSubscribes)
 	console.log("Numbers of messages received " + numOfMessagesReceivedPerClient)
-	console.log("Mean latencies " + meanLatencies + " ms")
 	console.log("Latency interval [" + [minLatency, maxLatency] + "] ms")
+	console.log("Mean latency " + grandMean  + " ms")
 	process.exit()
 })
 
