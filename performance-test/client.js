@@ -5,7 +5,6 @@ var constants = require("./constants.js")
 
 function PerformanceTestClient() {
 	this.isConnected = false
-	this.isSubscribed = false
 	this.numOfMessagesReceived = 0
 	this.sumOfTimeDiffs = 0
 	this.maxTimeDiff = Number.NEGATIVE_INFINITY
@@ -46,15 +45,8 @@ PerformanceTestClient.prototype.start = function() {
 	this.client.connect()
 }
 
-PerformanceTestClient.prototype.state = function() {
-	return {
-		didConnect: this.isConnected,
-		didSubscribe: this.client.subsByStream[constants.STREAM_ID][0].subscribed,
-		numOfMessagesReceived: this.numOfMessagesReceived,
-		sumOfTimeDiffs: this.sumOfTimeDiffs,
-		maxTimeDiff: this.maxTimeDiff,
-		minTimeDiff: this.minTimeDiff
-	}
+PerformanceTestClient.prototype.isSubscribed = function() {
+	return this.client.subsByStream[constants.STREAM_ID][0].subscribed
 }
 
 
@@ -80,14 +72,12 @@ process.on("SIGINT", function() {
 	var minLatency = Number.POSITIVE_INFINITY
 
 	clients.map(function(client) {
-		return client.state()
-	}).map(function(state) {
-		numOfConnects += state.didConnect
-		numOfSubscribes += state.didSubscribe
-		numOfMessagesReceivedPerClient.push(state.numOfMessagesReceived)
-		meanLatencies.push(state.sumOfTimeDiffs / state.numOfMessagesReceived)
-		maxLatency = Math.max(maxLatency, state.maxTimeDiff)
-		minLatency = Math.min(minLatency, state.minTimeDiff)
+		numOfConnects += client.isConnected
+		numOfSubscribes += client.isSubscribed()
+		numOfMessagesReceivedPerClient.push(client.numOfMessagesReceived)
+		meanLatencies.push(client.sumOfTimeDiffs / client.numOfMessagesReceived)
+		maxLatency = Math.max(maxLatency, client.maxTimeDiff)
+		minLatency = Math.min(minLatency, client.minTimeDiff)
 	})
 
 	console.log("Number of connects " + numOfConnects)
