@@ -13,7 +13,7 @@
   "license": "",
   "dependencies": {
     "kafka-node": "0.2.28",
-    "socket.io": "1.3.2",
+    "socket.io": "1.3.7",
     "optimist": "*",
     "node-int64": "*"
   },
@@ -21,7 +21,7 @@
     "mocha": "*",
     "mockery": "*",
     "buffermaker": "*",
-    "socket.io-client": "*",
+    "socket.io-client": "1.3.7",
     "colors": "*"
   }
 }
