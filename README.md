@@ -12,6 +12,13 @@ Example of starting the server in dev:
 
 `node start-server.js --zookeeper dev.unifina:2181 --port 8889`
 
+
+### Performance tests
+If you're planning to open thousands of streamer clients on one machine, you
+will need to tinker your [operating system
+settings](http://b.oldhu.com/2012/07/19/increase-tcp-max-connections-on-mac-os-x/).
+
+
 # Protocol
 
 ## Sent by client

@@ -15,7 +15,7 @@ function PerformanceTestClient() {
 	this.client = new StreamrClient({
 		server: constants.SERVER_URL,
 		autoConnect: false,
-		autoDisconnect: true
+		autoDisconnect: false
 	})
 
 	this.client.bind("connected", function() {
