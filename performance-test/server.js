@@ -20,6 +20,7 @@ var constants = require("./constants.js")
 function FakeKafkaHelper() {
 	this.fakeOffSet = 0
 	this.numOfSubscribes = 0
+	this.lastMessageEmittedAt = null
 }
 
 FakeKafkaHelper.prototype.__proto__ = events.EventEmitter.prototype;
@@ -53,7 +54,17 @@ FakeKafkaHelper.prototype.sendNextMessage = function() {
 		}
 
 		kafkaHelper.emit('message', exampleData, constants.STREAM_ID)
-		console.log("Sent message with offset " + this.fakeOffSet)
+
+		// Calculate time difference since last invocation of this method
+		var messageEmittedAt = (new Date).getTime()
+		if (this.lastMessageEmittedAt != null) {
+			var diff = messageEmittedAt - this.lastMessageEmittedAt
+		}
+
+		this.lastMessageEmittedAt = messageEmittedAt
+
+		console.log("Sent message with offset " + this.fakeOffSet +
+				" (" + diff +" ms)")
 
 	} else if (this.numOfSubscribes > constants.TOTAL_CLIENTS) {
 		console.log("error: more clients subscribed than expected".red)
