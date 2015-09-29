@@ -43,7 +43,7 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 FakeKafkaHelper.prototype.sendNextMessage = function() {
 
 	// Send data when all clients have subscribed
-	if (this.numOfSubscribes ==  constants.TOTAL_CLIENTS) {
+	if (this.numOfSubscribes == constants.TOTAL_CLIENTS) {
 		var exampleData = {
 			b: [[5.5,24608],[5.495,97408],[5.49,51101],[5.485,67982],[5.48,44765]],
 			s: [[5.505,34631],[5.51,100912],[5.515,75603],[5.52,99476],[5.525,48575]],
@@ -52,6 +52,8 @@ FakeKafkaHelper.prototype.sendNextMessage = function() {
 		}
 
 		kafkaHelper.emit('message', exampleData, constants.STREAM_ID)
+		console.log("Sent message with offset " + this.fakeOffSet)
+
 	} else if (this.numOfSubscribes > constants.TOTAL_CLIENTS) {
 		console.log("error: more clients subscribed than expected".red)
 		process.kill()

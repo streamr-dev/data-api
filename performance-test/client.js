@@ -22,7 +22,7 @@ function PerformanceTestClient() {
 
 	this.client.subscribe(
 			constants.STREAM_ID,
-			function (message, streamId, counter) {
+			function (message, streamId, timestamp, counter) {
 				++that.numOfMessagesReceived
 			},
 			{}
@@ -50,11 +50,11 @@ function createAndConnectClient() {
 	clients.push(client) // Var `clients` outside scope
 
 	if (clients.length < constants.TOTAL_CLIENTS) {
-		setTimeout(createAndConnectClient,
-				constants.TIMEOUT_BETWEEN_CLIENTS_IN_MILLIS)
+		setTimeout(createAndConnectClient, constants.CLIENT_RAMPUP_IN_MILLIS)
 	}
 }
 
+// When process is killed, print out stats
 process.on("SIGINT", function() {
 	var numOfConnects = 0
 	var numOfSubscribes = 0
