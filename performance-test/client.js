@@ -8,6 +8,8 @@ function PerformanceTestClient() {
 	this.isSubscribed = false
 	this.numOfMessagesReceived = 0
 	this.sumOfTimeDiffs = 0
+	this.maxTimeDiff = Number.NEGATIVE_INFINITY
+	this.minTimeDiff = Number.POSITIVE_INFINITY
 
 	var that = this
 
@@ -29,6 +31,10 @@ function PerformanceTestClient() {
 				var timeDiff = (new Date).getTime() - parseInt(timestamp, 10)
 				console.assert(timeDiff >= 0)
 
+				// Keep track of maximum and minimum latency
+				that.maxTimeDiff = Math.max(that.maxTimeDiff, timeDiff)
+				that.minTimeDiff = Math.min(that.minTimeDiff, timeDiff)
+
 				that.sumOfTimeDiffs += timeDiff
 				++that.numOfMessagesReceived
 			},
@@ -45,7 +51,9 @@ PerformanceTestClient.prototype.state = function() {
 		didConnect: this.isConnected,
 		didSubscribe: this.client.subsByStream[constants.STREAM_ID][0].subscribed,
 		numOfMessagesReceived: this.numOfMessagesReceived,
-		sumOfTimeDiffs: this.sumOfTimeDiffs
+		sumOfTimeDiffs: this.sumOfTimeDiffs,
+		maxTimeDiff: this.maxTimeDiff,
+		minTimeDiff: this.minTimeDiff
 	}
 }
 
@@ -68,6 +76,8 @@ process.on("SIGINT", function() {
 	var numOfSubscribes = 0
 	var numOfMessagesReceivedPerClient = []
 	var meanLatencies = []
+	var maxLatency = Number.NEGATIVE_INFINITY
+	var minLatency = Number.POSITIVE_INFINITY
 
 	clients.map(function(client) {
 		return client.state()
@@ -76,12 +86,15 @@ process.on("SIGINT", function() {
 		numOfSubscribes += state.didSubscribe
 		numOfMessagesReceivedPerClient.push(state.numOfMessagesReceived)
 		meanLatencies.push(state.sumOfTimeDiffs / state.numOfMessagesReceived)
+		maxLatency = Math.max(maxLatency, state.maxTimeDiff)
+		minLatency = Math.min(minLatency, state.minTimeDiff)
 	})
 
 	console.log("Number of connects " + numOfConnects)
 	console.log("Number of subscribes " + numOfSubscribes)
 	console.log("Numbers of messages received " + numOfMessagesReceivedPerClient)
-	console.log("Mean latencies " + meanLatencies)
+	console.log("Mean latencies " + meanLatencies + " ms")
+	console.log("Latency interval [" + [minLatency, maxLatency] + "] ms")
 	process.exit()
 })
 
