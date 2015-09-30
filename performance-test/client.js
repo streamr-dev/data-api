@@ -1,4 +1,5 @@
 global.io = require("socket.io-client")
+var fs = require("fs")
 var StreamrClient = require("./lib/streamr-client/streamr-client.js").StreamrClient
 var constants = require("./constants.js")
 
@@ -27,8 +28,11 @@ function PerformanceTestClient() {
 			function (message, streamId, timestamp, counter) {
 
 				// Calculate latency. Assume server and client time are synchronized.
-				var timeDiff = (new Date).getTime() - parseInt(timestamp, 10)
-				console.assert(timeDiff >= 0)
+				var timeDiff = (new Date).getTime() - timestamp
+				console.assert(timeDiff >= -5, "server time in future w.r.t client")
+				if (timeDiff < 0) {
+					timeDiff = 0
+				}
 
 				// Keep track of maximum and minimum latency
 				that.maxTimeDiff = Math.max(that.maxTimeDiff, timeDiff)
@@ -36,6 +40,10 @@ function PerformanceTestClient() {
 
 				that.sumOfTimeDiffs += timeDiff
 				++that.numOfMessagesReceived
+
+				// Order not preserved
+				fs.appendFile(constants.LATENCY_LOG_FILE,
+						timeDiff + "\n")
 			},
 			{}
 	)
@@ -104,5 +112,7 @@ process.on("SIGINT", function() {
 	console.log("Mean min and max [" + [minMean, maxMean] + "] ms")
 	process.exit()
 })
+
+fs.writeFileSync(constants.LATENCY_LOG_FILE, "")
 
 createAndConnectClient()
