@@ -4,25 +4,25 @@ ReadKey <- function() {
 }
 
 # Load latency data, take 1st column of CSV
-latency.data <- read.csv("latencies.csv")[, 2]
+latency.data <- read.csv("latencies.csv", header=T)
 
 # Moving average
 MovingAverage <- function(x, n) {
-  filter(x,rep(1/n,n), sides=2)
+  filter(x, rep(1/n, n), sides=2)
 }
 
 # Plot time series with moving average
-plot.ts(latency.data,
+plot.ts(latency.data$latency,
         ylab="Latency in ms",
         main="Latency over time",
         col="gray",
         #log="y"   # logarithmic scale
         )
-lines(MovingAverage(latency.data, 2000), col="black", lwd=2)
+lines(MovingAverage(latency.data$latency, 2500), col="black", lwd=2)
 ReadKey()
 
 # Print out summary statistics
-print(summary(latency.data))
+print(summary(latency.data$latency))
 ReadKey()
 
 
