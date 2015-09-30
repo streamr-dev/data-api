@@ -4,7 +4,8 @@ var StreamrClient = require("./lib/streamr-client/streamr-client.js").StreamrCli
 var constants = require("./constants.js")
 
 
-function PerformanceTestClient() {
+function PerformanceTestClient(clientId) {
+	this.clientId = clientId
 	this.isConnected = false
 	this.numOfMessagesReceived = 0
 	this.sumOfTimeDiffs = 0
@@ -43,7 +44,7 @@ function PerformanceTestClient() {
 
 				// Order not preserved
 				fs.appendFile(constants.LATENCY_LOG_FILE,
-						timeDiff + "\n")
+						that.clientId + "," + timeDiff + "," + counter + "\n")
 			},
 			{}
 	)
@@ -61,7 +62,7 @@ PerformanceTestClient.prototype.isSubscribed = function() {
 var clients = []
 
 function createAndConnectClient() {
-	var client = new PerformanceTestClient()
+	var client = new PerformanceTestClient(clients.length)
 	client.start()
 	clients.push(client) // Var `clients` outside scope
 
@@ -113,6 +114,6 @@ process.on("SIGINT", function() {
 	process.exit()
 })
 
-fs.writeFileSync(constants.LATENCY_LOG_FILE, "")
+fs.writeFileSync(constants.LATENCY_LOG_FILE, "client,latency,offset")
 
 createAndConnectClient()
