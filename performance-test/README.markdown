@@ -64,4 +64,18 @@ but this didn't work for me.)
 ## Configuring operating system for thousands of clients
 If you're planning to open thousands of streamer clients on one machine, you
 will need to tinker your [operating system
+
 settings](http://b.oldhu.com/2012/07/19/increase-tcp-max-connections-on-mac-os-x/).
+
+
+## Configuring Socket.IO heartbeat timeout
+
+http://stackoverflow.com/questions/12815231/controlling-the-heartbeat-timeout-from-the-client-in-socket-io
+
+## Useful commands
+
+- `netstat -a` lists all ports
+- `netstat -at` lists all TCP ports
+- `netstat -au` lists all UDP ports
+
+http://www.thegeekstuff.com/2010/03/netstat-command-examples/
