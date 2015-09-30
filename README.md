@@ -14,9 +14,8 @@ Example of starting the server in dev:
 
 
 ### Performance tests
-If you're planning to open thousands of streamer clients on one machine, you
-will need to tinker your [operating system
-settings](http://b.oldhu.com/2012/07/19/increase-tcp-max-connections-on-mac-os-x/).
+
+See [performance-test/README.md](performance-test/README.md)
 
 
 # Protocol
