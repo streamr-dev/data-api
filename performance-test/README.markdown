@@ -38,6 +38,11 @@ configure the amount of clients, message rate, client ramp-up period etc., see
    latencies.csv. After installation run `R` to open up the interpreter and run
    the function `source("visualize-latency.R")`.
 
+*Note*: it is imperative that the server and clients agree on the setting
+`TOTAL_CLIENTS` in [constants.js](constants.js) or else the server will either
+wait for clients that will never connect or it will shutdown because too many
+clients connected.
+
 
 ## Configuring time synchronization over NTP
 
