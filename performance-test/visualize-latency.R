@@ -1,3 +1,8 @@
+ReadKey <- function() {
+    cat ("Press [enter] to continue")
+    line <- readline()
+}
+
 # Load latency data, take 1st column of CSV
 latency.data <- read.csv("latencies.csv")[, 2]
 
@@ -13,8 +18,19 @@ plot.ts(latency.data,
         col="gray",
         #log="y"   # logarithmic scale
         )
-
 lines(MovingAverage(latency.data, 2000), col="black", lwd=2)
+ReadKey()
 
 # Print out summary statistics
 print(summary(latency.data))
+ReadKey()
+
+
+# Plot distribution of latencies
+hist(latency.data,
+     breaks=200,    # number of bars
+     prob=T,        # y-axis as probability
+     col="gray",
+     main="Distribution of latency",
+     xlab="Latency in ms"
+    )
