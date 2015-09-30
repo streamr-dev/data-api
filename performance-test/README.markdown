@@ -18,8 +18,8 @@ configure the amount of clients, message rate, client ramp-up period etc., see
    `SERVER_URL` and `SERVER_PORT` correctly if you are planning to run server
    on different system.
 
-3. Start up server with `node server.js` and wait for message "listening on
-   port" or something along those lines.
+3. Start up server with `node --nouse-idle-notification --expose-gc server.js`
+   and wait for message "listening on port" or something along those lines.
 
 4. Start up clients with `node client.js`. This will connect clients one-by-one
    to the server.
@@ -42,6 +42,10 @@ configure the amount of clients, message rate, client ramp-up period etc., see
 `TOTAL_CLIENTS` in [constants.js](constants.js) or else the server will either
 wait for clients that will never connect or it will shutdown because too many
 clients connected.
+
+### Debugging client communication
+
+`DEBUG=* node client.js`
 
 
 ## Configuring time synchronization over NTP

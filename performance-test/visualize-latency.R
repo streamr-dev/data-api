@@ -18,7 +18,7 @@ plot.ts(latency.data$latency,
         col="gray",
         #log="y"   # logarithmic scale
         )
-lines(MovingAverage(latency.data$latency, 2500), col="black", lwd=2)
+lines(MovingAverage(latency.data$latency, 1000), col="black", lwd=2)
 ReadKey()
 
 # Print out summary statistics
@@ -27,7 +27,7 @@ ReadKey()
 
 
 # Plot distribution of latencies
-hist(latency.data,
+hist(latency.data$latency,
      breaks=200,    # number of bars
      prob=T,        # y-axis as probability
      col="gray",
