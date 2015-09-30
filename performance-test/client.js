@@ -114,6 +114,6 @@ process.on("SIGINT", function() {
 	process.exit()
 })
 
-fs.writeFileSync(constants.LATENCY_LOG_FILE, "client,latency,offset")
+fs.writeFileSync(constants.LATENCY_LOG_FILE, "client,latency,offset\n")
 
 createAndConnectClient()
