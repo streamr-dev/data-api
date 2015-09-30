@@ -10,6 +10,34 @@ log the messages they received, latency of messages and other statistics. To
 configure the amount of clients, message rate, client ramp-up period etc., see
 [constants.js](constants.js).
 
+## Running
+
+1. Make sure you have run `npm install` on the root folder of this project.
+
+2. Configure test by editing [constants.js](constants.js). Make sure to set
+   `SERVER_URL` and `SERVER_PORT` correctly if you are planning to run server
+   on different system.
+
+3. Start up server with `node server.js` and wait for message "listening on
+   port" or something along those lines.
+
+4. Start up clients with `node client.js`. This will connect clients one-by-one
+   to the server.
+
+5. After all clients have successfully connected, the server will start sending
+   messages. After `NUM_OF_MESSAGES_TO_SEND` messages have been sent, the
+   server console will indicate this and stop sending messages.
+
+6. The clients and server can now be shut-off. The client script should print
+   out statistics when killed.
+
+7. File latencies.csv contains events data collected by the clients during the
+   performance test.
+
+8. Install [R](https://www.r-project.org/) to visualize the data in
+   latencies.csv. After installation run `R` to open up the interpreter and run
+   the function `source("visualize-latency.R")`.
+
 
 ## Configuring time synchronization over NTP
 
