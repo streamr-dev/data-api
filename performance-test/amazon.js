@@ -46,8 +46,8 @@ stream.on("finish", function() {
 			var params = {
 				ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
 				InstanceType: "t1.micro",
-				MinCount: 1,
-				MaxCount: 1,
+				MinCount: 4,
+				MaxCount: 4,
 				KeyName: "eric",
 				SecurityGroups: [ "default", "SSH-from-sujuwa" ],
 				UserData: new Buffer(commonUserData).toString("base64")
@@ -60,11 +60,14 @@ stream.on("finish", function() {
 					return
 				}
 
-				var instanceId = data.Instances[0].InstanceId
-				console.log("Created instance", instanceId)
+
+				var instanceIds = data.Instances.map(function(instance) {
+					return instance.InstanceId
+				})
+				console.log("Created instances", instanceIds)
 
 				params = {
-					Resources: [instanceId],
+					Resources: instanceIds,
 					Tags: [{ Key: "Owner", Value: "eric" }]
 				}
 
