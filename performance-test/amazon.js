@@ -43,8 +43,6 @@ stream.on("finish", function() {
 			var commonUserData = fs.readFileSync("amazon/common_user_data.sh", "utf-8")
 				.replace("<CREDENTIALS>", credentials)
 
-			console.log(commonUserData)
-
 			var params = {
 				ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
 				InstanceType: "t1.micro",
