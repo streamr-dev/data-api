@@ -22,6 +22,10 @@
     "mockery": "*",
     "buffermaker": "*",
     "socket.io-client": "1.3.7",
-    "colors": "*"
+    "colors": "*",
+    "aws-sdk": "2.2.5",
+    "fstream": "*",
+    "tar": "*",
+    "stream-buffers": "*"
   }
 }
