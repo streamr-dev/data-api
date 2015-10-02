@@ -5,14 +5,22 @@ function define(name, value) {
 	});
 }
 
-define("SERVER_PORT", 8890);
-//define("SERVER_URL", "http://localhost:8889");
-define("STREAM_ID", "testStreamId");
- define("SERVER_URL", "http://dev.unifina:8890");
-// define("STREAM_ID", "1ef8TbyGTFiAlZ8R2gCaJw"); // Front page demo
-define("NUM_OF_MESSAGES_TO_SEND", 2000)
-define("MESSAGE_RATE_IN_MILLIS", 400)
-define("TOTAL_CLIENTS", 2000)
+// amazon.js
+define("NUM_OF_EC2_INSTANCES", 3)
+
+// client.js
+define("NUM_OF_CLIENTS_PER_INSTANCE", 1000)
+define("SERVER_URL", "http://dev.unifina:8890");
 define("CLIENT_RAMPUP_IN_MILLIS", 50)
 define("LATENCY_LOG_FILE", "latencies.csv")
 
+// server.js
+define("NUM_OF_MESSAGES_TO_SEND", 2000)
+define("MESSAGE_RATE_IN_MILLIS", 400)
+define("TOTAL_CLIENTS",
+		(this.NUM_OF_EC2_INSTANCES - 1) * this.NUM_OF_CLIENTS_PER_INSTANCE)
+
+
+// shared
+define("SERVER_PORT", 8890);
+define("STREAM_ID", "testStreamId");

@@ -15,10 +15,12 @@ function PerformanceTestClient(clientId) {
 	var that = this
 
 	this.client = new StreamrClient({
-		server: constants.SERVER_URL,
+		server: process.env.SERVER || constants.SERVER_URL,
 		autoConnect: false,
 		autoDisconnect: false
 	})
+
+	console.log("Created client " + this.clientId + " for " + this.client.options.server)
 
 	this.client.bind("connected", function() {
 		that.isConnected = true;
@@ -66,7 +68,7 @@ function createAndConnectClient() {
 	client.start()
 	clients.push(client) // Var `clients` outside scope
 
-	if (clients.length < constants.TOTAL_CLIENTS) {
+	if (clients.length < constants.NUM_OF_CLIENTS_PER_INSTANCE) {
 		setTimeout(createAndConnectClient, constants.CLIENT_RAMPUP_IN_MILLIS)
 	}
 }
@@ -113,6 +115,7 @@ process.on("SIGINT", function() {
 	console.log("Mean min and max [" + [minMean, maxMean] + "] ms")
 	process.exit()
 })
+
 
 fs.writeFileSync(constants.LATENCY_LOG_FILE, "client,latency,offset\n")
 

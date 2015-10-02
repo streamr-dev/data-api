@@ -5,6 +5,9 @@ var fstream = require("fstream")
 var streamBuffers = require("stream-buffers")
 var AWS = require("aws-sdk")
 
+var constants = require("./constants.js")
+
+
 AWS.config.region = "eu-west-1"
 
 var writableStreamBuffer = new streamBuffers.WritableStreamBuffer({
@@ -43,44 +46,85 @@ stream.on("finish", function() {
 			var commonUserData = fs.readFileSync("amazon/common_user_data.sh", "utf-8")
 				.replace("<CREDENTIALS>", credentials)
 
-			var params = {
+			var clientUserData = commonUserData + "\n" +
+				fs.readFileSync("amazon/client_user_data.sh", "utf-8")
+
+			var serverUserData = commonUserData + "\n" +
+				fs.readFileSync("amazon/server_user_data.sh", "utf-8")
+
+			var serverParams = {
 				ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
 				InstanceType: "t1.micro",
-				MinCount: 4,
-				MaxCount: 4,
+				MinCount: 1,
+				MaxCount: 1,
 				KeyName: "eric",
-				SecurityGroups: [ "default", "SSH-from-sujuwa" ],
-				UserData: new Buffer(commonUserData).toString("base64")
+				SecurityGroups: [
+					"default",
+					"SSH-from-sujuwa",
+					"streamr-socketio-server"
+				],
+				UserData: new Buffer(serverUserData).toString("base64")
 			}
 
-			// Create the instances
-			ec2.runInstances(params, function(err, data) {
+			ec2.runInstances(serverParams, function(err, data) {
 				if (err) {
 					console.log("Could not create instance", err)
 					return
 				}
 
+				console.log("server instance created, waiting to obtain ip address")
 
-				var instanceIds = data.Instances.map(function(instance) {
-					return instance.InstanceId
-				})
-				console.log("Created instances", instanceIds)
+				var serverInstanceId = data.Instances[0].InstanceId
 
-				params = {
-					Resources: instanceIds,
-					Tags: [{ Key: "Owner", Value: "eric" }]
-				}
+				ec2.waitFor("instanceRunning", { InstanceIds: [serverInstanceId] }, function(err, data) {
+					if (err) {
+						console.log("Instance could not be run", err)
+						return
+					}
 
-				ec2.createTags(params, function(err) {
-					console.log("Tagging instance", err ? "failure" : "success")
+					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress;
+
+					clientUserData = clientUserData.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
+						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
+						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
+
+					console.log(clientUserData)
+
+					var clientParams = {
+						ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
+						InstanceType: "t1.micro",
+						MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
+						MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
+						KeyName: "eric",
+						SecurityGroups: [ "default", "SSH-from-sujuwa" ],
+						UserData: new Buffer(clientUserData).toString("base64")
+					}
+
+
+					// Create the client instances
+					ec2.runInstances(clientParams, function(err, data) {
+						if (err) {
+							console.log("Could not create instance", err)
+							return
+						}
+
+
+						var instanceIds = data.Instances.map(function(instance) {
+							return instance.InstanceId
+						})
+						console.log("Created instances", instanceIds)
+
+						params = {
+							Resources: instanceIds,
+							Tags: [{ Key: "Owner", Value: "eric" }]
+						}
+
+						ec2.createTags(params, function(err) {
+							console.log("Tagging instance", err ? "failure" : "success")
+						})
+					})
 				})
 			})
-
 		}
 	})
 })
-
-
-
-
-
