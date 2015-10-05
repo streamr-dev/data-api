@@ -54,7 +54,7 @@ stream.on("finish", function() {
 
 			var serverParams = {
 				ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
-				InstanceType: "t1.micro",
+				InstanceType: "m1.large",
 				MinCount: 1,
 				MaxCount: 1,
 				KeyName: "eric",
@@ -91,7 +91,7 @@ stream.on("finish", function() {
 
 					var clientParams = {
 						ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
-						InstanceType: "t1.micro",
+						InstanceType: "m1.medium",
 						MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
 						MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
 						KeyName: "eric",
