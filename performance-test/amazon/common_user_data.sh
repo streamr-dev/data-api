@@ -1,5 +1,5 @@
 #!/bin/bash
-apt-get --assume-yes install nodejs nodejs-legacy awscli npm
+apt-get --assume-yes install nodejs nodejs-legacy awscli npm rdate
 su ubuntu <<'EOF'
 mkdir -p /home/ubuntu/.aws
 printf "<CREDENTIALS>" > /home/ubuntu/.aws/credentials

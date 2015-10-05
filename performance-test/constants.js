@@ -9,9 +9,9 @@ function define(name, value) {
 define("NUM_OF_EC2_INSTANCES", 3)
 
 // client.js
-define("NUM_OF_CLIENTS_PER_INSTANCE", 1000)
+define("NUM_OF_CLIENTS_PER_INSTANCE", 100)
 define("SERVER_URL", "http://dev.unifina:8890");
-define("CLIENT_RAMPUP_IN_MILLIS", 50)
+define("CLIENT_RAMPUP_IN_MILLIS", 100)
 define("LATENCY_LOG_FILE", "latencies.csv")
 
 // server.js

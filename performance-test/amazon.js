@@ -85,8 +85,7 @@ stream.on("finish", function() {
 					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress;
 
 					clientUserData = clientUserData.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
-						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
-						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
+						.replace("<IP>", serverIp)
 
 					console.log(clientUserData)
 

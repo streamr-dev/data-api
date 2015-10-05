@@ -32,7 +32,8 @@ function PerformanceTestClient(clientId) {
 
 				// Calculate latency. Assume server and client time are synchronized.
 				var timeDiff = (new Date).getTime() - timestamp
-				console.assert(timeDiff >= -5, "server time in future w.r.t client")
+				console.assert(timeDiff >= -10, "server time in future w.r.t client," +
+						" difference = " + timeDiff)
 				if (timeDiff < 0) {
 					timeDiff = 0
 				}
