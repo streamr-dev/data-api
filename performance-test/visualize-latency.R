@@ -3,22 +3,28 @@ ReadKey <- function() {
     line <- readline()
 }
 
-# Load latency data, take 1st column of CSV
-latency.data <- read.csv("latencies.csv", header=T)
-
 # Moving average
 MovingAverage <- function(x, n) {
   filter(x, rep(1/n, n), sides=2)
 }
 
 # Plot time series with moving average
-plot.ts(latency.data$latency,
-        ylab="Latency in ms",
-        main="Latency over time",
-        col="gray",
-        #log="y"   # logarithmic scale
-        )
-lines(MovingAverage(latency.data$latency, 1000), col="black", lwd=2)
+PlotLatency <- function(latency.data) {
+  plot.ts(latency.data$latency,
+          ylab="Latency in ms",
+          main="Latency over time",
+          col="gray",
+          #log="y"   # logarithmic scale
+          )
+  lines(MovingAverage(latency.data$latency, 1000), col="black", lwd=2)
+}
+
+
+
+# Load latency data, take 1st column of CSV
+latency.data <- read.csv("latencies.csv", header=T)
+
+PlotLatency(latency.data)
 ReadKey()
 
 # Print out summary statistics
@@ -34,3 +40,8 @@ hist(latency.data$latency,
      main="Distribution of latency",
      xlab="Latency in ms"
     )
+
+cat("Last package offset", max(latency.data$offset), "\n")
+a <- length(table(table(latency.data$client))) == 1 && length(table(table(latency.data$offset))) == 1
+cat("All messages received? ", a, "\n")
+
