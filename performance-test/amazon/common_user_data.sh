@@ -8,3 +8,6 @@ aws s3api get-object --bucket streamr-socketio-stresstest --key stress-test.tar.
 (cd /home/ubuntu/streamr-socketio-server && rm -rf node_modules)
 (cd /home/ubuntu/streamr-socketio-server && npm install)
 EOF
+echo "* soft nofile 64000" >> /etc/security/limits.conf
+echo "* hard nofile 64000" >> /etc/security/limits.conf
+sudo sysctl -w net.core.somaxconn=64000
