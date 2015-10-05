@@ -4,13 +4,14 @@ var StreamrClient = require("./lib/streamr-client/streamr-client.js").StreamrCli
 var constants = require("./constants.js")
 
 
-function PerformanceTestClient(clientId) {
+function PerformanceTestClient(clientId, wstream) {
 	this.clientId = clientId
 	this.isConnected = false
 	this.numOfMessagesReceived = 0
 	this.sumOfTimeDiffs = 0
 	this.maxTimeDiff = Number.NEGATIVE_INFINITY
 	this.minTimeDiff = Number.POSITIVE_INFINITY
+	this.wstream = wstream
 
 	var that = this
 
@@ -32,7 +33,7 @@ function PerformanceTestClient(clientId) {
 
 				// Calculate latency. Assume server and client time are synchronized.
 				var timeDiff = (new Date).getTime() - timestamp
-				console.assert(timeDiff >= -10, "server time in future w.r.t client," +
+				console.assert(timeDiff >= -100, "server time in future w.r.t client," +
 						" difference = " + timeDiff)
 				if (timeDiff < 0) {
 					timeDiff = 0
@@ -46,8 +47,7 @@ function PerformanceTestClient(clientId) {
 				++that.numOfMessagesReceived
 
 				// Order not preserved
-				fs.appendFile(constants.LATENCY_LOG_FILE,
-						that.clientId + "," + timeDiff + "," + counter + "\n")
+				that.wstream.write(that.clientId + "," + timeDiff + "," + counter + "\n")
 			},
 			{}
 	)
@@ -64,13 +64,13 @@ PerformanceTestClient.prototype.isSubscribed = function() {
 
 var clients = []
 
-function createAndConnectClient() {
-	var client = new PerformanceTestClient(clients.length)
+function createAndConnectClient(wstream) {
+	var client = new PerformanceTestClient(clients.length, wstream)
 	client.start()
 	clients.push(client) // Var `clients` outside scope
 
 	if (clients.length < constants.NUM_OF_CLIENTS_PER_INSTANCE) {
-		setTimeout(createAndConnectClient, constants.CLIENT_RAMPUP_IN_MILLIS)
+		setTimeout(function() { createAndConnectClient(wstream) }, constants.CLIENT_RAMPUP_IN_MILLIS)
 	}
 }
 
@@ -78,8 +78,12 @@ function meanOfArray(list) {
 	return list.reduce(function(sum, val) { return sum + val }, 0) / list.length
 }
 
+var wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
+
 // When process is killed, print out stats
 process.on("SIGINT", function() {
+	wstream.end();
+
 	var numOfConnects = 0
 	var numOfSubscribes = 0
 	var numOfMessagesReceivedPerClient = []
@@ -118,6 +122,5 @@ process.on("SIGINT", function() {
 })
 
 
-fs.writeFileSync(constants.LATENCY_LOG_FILE, "client,latency,offset\n")
-
-createAndConnectClient()
+wstream.write("client,latency,offset\n")
+createAndConnectClient(wstream)
