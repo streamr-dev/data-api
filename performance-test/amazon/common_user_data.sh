@@ -11,3 +11,4 @@ EOF
 echo "* soft nofile 64000" >> /etc/security/limits.conf
 echo "* hard nofile 64000" >> /etc/security/limits.conf
 sudo sysctl -w net.core.somaxconn=64000
+ntpdate 0.amazon.pool.ntp.org
