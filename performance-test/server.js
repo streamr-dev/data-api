@@ -83,13 +83,17 @@ var kafkaHelper = new FakeKafkaHelper()
 var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
 
 function startMessageSendingLoop() {
+
+	var startTime = (new Date).getTime()
 	kafkaHelper.sendNextMessage()
+	var timeSpent = (new Date).getTime() - startTime
 
 	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES_TO_SEND) {
 		console.log("info: all messages have been sent".green)
 		kafkaHelper.wstream.end()
 	} else {
-		setTimeout(startMessageSendingLoop, constants.MESSAGE_RATE_IN_MILLIS)
+		setTimeout(startMessageSendingLoop,
+				Math.max(0, constants.MESSAGE_RATE_IN_MILLIS - timeSpent))
 	}
 }
 
