@@ -14,9 +14,9 @@ PlotLatency <- function(latency.data) {
           ylab="Latency in ms",
           main="Latency over time",
           col="gray",
-          #log="y"   # logarithmic scale
+          log="y"   # logarithmic scale
           )
-  lines(MovingAverage(latency.data$latency, 1000), col="black", lwd=2)
+  lines(MovingAverage(latency.data$latency, 200), col="black", lwd=2)
 }
 
 

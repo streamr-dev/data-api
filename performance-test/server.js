@@ -11,6 +11,7 @@
  *   d) if more subscriptions occur than was expected, server exits.
  */
 
+var fs = require("fs")
 var events = require('events')
 var colors = require("colors")
 var SocketIoServer = require('../lib/socketio-server').SocketIoServer
@@ -21,6 +22,8 @@ function FakeKafkaHelper() {
 	this.fakeOffSet = 0
 	this.numOfSubscribes = 0
 	this.lastMessageEmittedAt = null
+	this.wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
+	this.wstream.write("latency,offset\n")
 }
 
 FakeKafkaHelper.prototype.__proto__ = events.EventEmitter.prototype;
@@ -59,6 +62,7 @@ FakeKafkaHelper.prototype.sendNextMessage = function() {
 		var messageEmittedAt = (new Date).getTime()
 		if (this.lastMessageEmittedAt != null) {
 			var diff = messageEmittedAt - this.lastMessageEmittedAt
+			this.wstream.write(diff + "," + (this.fakeOffSet - 1) + "\n")
 		}
 
 		this.lastMessageEmittedAt = messageEmittedAt
@@ -83,6 +87,7 @@ function startMessageSendingLoop() {
 
 	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES_TO_SEND) {
 		console.log("info: all messages have been sent".green)
+		kafkaHelper.wstream.end()
 	} else {
 		setTimeout(startMessageSendingLoop, constants.MESSAGE_RATE_IN_MILLIS)
 	}
