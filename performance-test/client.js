@@ -76,6 +76,17 @@ function meanOfArray(list) {
 }
 
 var wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
+wstream.cork()
+
+
+setInterval(function() {
+	var startTime = (new Date).getTime()
+	console.log("Log write took")
+	wstream.uncork()
+	wstream.cork()
+	var diff = (new Date).getTime() - startTime
+	console.log("Writing to file took (" + diff + " ms)")
+}, 5000)
 
 // When process is killed, print out stats
 process.on("SIGINT", function() {
@@ -117,6 +128,7 @@ process.on("SIGINT", function() {
 	console.log("Mean min and max [" + [minMean, maxMean] + "] ms")
 	process.exit()
 })
+
 
 
 wstream.write("client,latency,offset\n")
