@@ -90,3 +90,12 @@ function startMessageSendingLoop() {
 
 console.log("Server started on port " + constants.SERVER_PORT)
 startMessageSendingLoop()
+
+if (global.gc) {
+	setInterval(function() {
+		var startTime = (new Date).getTime()
+		global.gc()
+		var diff = (new Date).getTime() - startTime
+		console.log("Garbage collection (" + diff + " ms)")
+	}, 1000 * 30)
+}
