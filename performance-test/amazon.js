@@ -9,7 +9,36 @@ var constants = require("./constants.js")
 
 AWS.config.region = "eu-west-1"
 
-// Step 1: read project folder into memory
+var serverParams = {
+	ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
+	InstanceType: "t2.large",
+	MinCount: 1,
+	MaxCount: 1,
+	KeyName: "eric",
+	SecurityGroupIds: [
+		"sg-76e63a12",             // default
+		"sg-8fe13deb",             // SSH from Sujuwa
+		"sg-0be23e6f"              // streamr-socketio-server
+	],
+	SubnetId: "subnet-18abf07d"  // VPC
+}
+
+var clientParams = {
+	ImageId: "ami-c8a5eebf",     // Ubuntu 14.10 amd64 HVM
+	InstanceType: "t2.medium",
+	MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
+	MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
+	KeyName: "eric",
+	SecurityGroupIds: [
+		"sg-76e63a12",             // default
+		"sg-8fe13deb",             // SSH from Sujuwa
+	],
+	SubnetId: "subnet-18abf07d"  // VPC
+}
+
+
+
+
 var writableStreamBuffer = new streamBuffers.WritableStreamBuffer({
 	initialSize: (500 * 1024),
 	incrementAmount: (500 * 1024)
@@ -52,20 +81,7 @@ stream.on("finish", function() {
 			var serverUserData = commonUserData + "\n" +
 				fs.readFileSync("amazon/server_user_data.sh", "utf-8")
 
-			var serverParams = {
-				ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
-				InstanceType: "t2.large",
-				MinCount: 1,
-				MaxCount: 1,
-				KeyName: "eric",
-				SecurityGroupIds: [
-					"sg-76e63a12",			// default
-					"sg-8fe13deb",      // SSH from Sujuwa
-					"sg-0be23e6f"				// streamr-socketio-server
-				],
-				SubnetId: "subnet-18abf07d", // VPC
-				UserData: new Buffer(serverUserData).toString("base64")
-			}
+			serverParams.UserData = new Buffer(serverUserData).toString("base64")
 
 			ec2.runInstances(serverParams, function(err, data) {
 				if (err) {
@@ -85,25 +101,12 @@ stream.on("finish", function() {
 
 					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress;
 
-					clientUserData = clientUserData.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
-						.replace("<IP>", serverIp)
+					clientUserData = clientUserData
+						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
 
 					console.log(clientUserData)
 
-					var clientParams = {
-						ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
-						InstanceType: "t2.medium",
-						MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
-						MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
-						KeyName: "eric",
-						SecurityGroupIds: [
-							"sg-76e63a12",			// default
-							"sg-8fe13deb",      // SSH from Sujuwa
-						],
-						SubnetId: "subnet-18abf07d", // VPC
-						UserData: new Buffer(clientUserData).toString("base64")
-					}
-
+					clientParams.UserData = new Buffer(clientUserData).toString("base64")
 
 					// Create the client instances
 					ec2.runInstances(clientParams, function(err, data) {
