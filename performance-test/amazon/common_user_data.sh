@@ -1,5 +1,9 @@
 #!/bin/bash
 apt-get --assume-yes install nodejs nodejs-legacy awscli npm rdate
+npm cache clean -f
+npm install -g n
+n "v4.1.0"
+ln -sf /usr/local/n/versions/node/*/bin/node /usr/bin/node
 su ubuntu <<'EOF'
 mkdir -p /home/ubuntu/.aws
 printf "<CREDENTIALS>" > /home/ubuntu/.aws/credentials
