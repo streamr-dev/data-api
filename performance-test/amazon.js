@@ -7,9 +7,9 @@ var AWS = require("aws-sdk")
 
 var constants = require("./constants.js")
 
-
 AWS.config.region = "eu-west-1"
 
+// Step 1: read project folder into memory
 var writableStreamBuffer = new streamBuffers.WritableStreamBuffer({
 	initialSize: (500 * 1024),
 	incrementAmount: (500 * 1024)
@@ -53,16 +53,17 @@ stream.on("finish", function() {
 				fs.readFileSync("amazon/server_user_data.sh", "utf-8")
 
 			var serverParams = {
-				ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
-				InstanceType: "m1.large",
+				ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
+				InstanceType: "t2.large",
 				MinCount: 1,
 				MaxCount: 1,
 				KeyName: "eric",
-				SecurityGroups: [
-					"default",
-					"SSH-from-sujuwa",
-					"streamr-socketio-server"
+				SecurityGroupIds: [
+					"sg-76e63a12",			// default
+					"sg-8fe13deb",      // SSH from Sujuwa
+					"sg-0be23e6f"				// streamr-socketio-server
 				],
+				SubnetId: "subnet-18abf07d", // VPC
 				UserData: new Buffer(serverUserData).toString("base64")
 			}
 
@@ -90,12 +91,16 @@ stream.on("finish", function() {
 					console.log(clientUserData)
 
 					var clientParams = {
-						ImageId: "ami-daa5eead", // Ubuntu 14.10 amd64 ebs
-						InstanceType: "m1.medium",
+						ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
+						InstanceType: "t2.medium",
 						MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
 						MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
 						KeyName: "eric",
-						SecurityGroups: [ "default", "SSH-from-sujuwa" ],
+						SecurityGroupIds: [
+							"sg-76e63a12",			// default
+							"sg-8fe13deb",      // SSH from Sujuwa
+						],
+						SubnetId: "subnet-18abf07d", // VPC
 						UserData: new Buffer(clientUserData).toString("base64")
 					}
 

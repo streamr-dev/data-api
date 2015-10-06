@@ -33,17 +33,14 @@ function PerformanceTestClient(clientId, wstream) {
 
 				// Calculate latency. Assume server and client time are synchronized.
 				var timeDiff = (new Date).getTime() - timestamp
-				console.assert(timeDiff >= -100, "server time in future w.r.t client," +
+				console.assert(timeDiff >= -150, "server time in future w.r.t client," +
 						" difference = " + timeDiff)
-				if (timeDiff < 0) {
-					timeDiff = 0
-				}
 
 				// Keep track of maximum and minimum latency
 				that.maxTimeDiff = Math.max(that.maxTimeDiff, timeDiff)
-				that.minTimeDiff = Math.min(that.minTimeDiff, timeDiff)
+				that.minTimeDiff = Math.min(that.minTimeDiff, Math.max(timeDiff, 0))
 
-				that.sumOfTimeDiffs += timeDiff
+				that.sumOfTimeDiffs += Math.max(timeDiff, 0)
 				++that.numOfMessagesReceived
 
 				// Order not preserved

@@ -24,6 +24,11 @@ PlotLatency <- function(latency.data) {
 # Load latency data, take 1st column of CSV
 latency.data <- read.csv("latencies.csv", header=T)
 
+# If negative latencies, take offset into consideration
+if (min(latency.data$latency) < 0) {
+  latency.data$latency <- latency.data$latency - min(latency.data$latency)
+}
+
 PlotLatency(latency.data)
 ReadKey()
 
