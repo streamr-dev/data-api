@@ -26,6 +26,7 @@
     "aws-sdk": "2.2.5",
     "fstream": "*",
     "tar": "*",
-    "stream-buffers": "*"
+    "stream-buffers": "*",
+    "ssh2": "*"
   }
 }

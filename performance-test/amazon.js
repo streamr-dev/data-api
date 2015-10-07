@@ -4,6 +4,7 @@ var zlib = require("zlib")
 var fstream = require("fstream")
 var streamBuffers = require("stream-buffers")
 var AWS = require("aws-sdk")
+var SSHClient = require("ssh2").Client;
 
 var constants = require("./constants.js")
 
@@ -36,8 +37,13 @@ var clientParams = {
 	SubnetId: "subnet-18abf07d"  // VPC
 }
 
-
-
+Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
 
 var writableStreamBuffer = new streamBuffers.WritableStreamBuffer({
 	initialSize: (500 * 1024),
@@ -139,11 +145,63 @@ stream.on("finish", function() {
 									return
 							}
 
-							data.Reservations.forEach(function(reservation) {
-								console.log(reservation.Instances.map(function(instance) {
-									return instance.PublicIpAddress;
-								}))
+							var reservation = data.Reservations[0]
+							var clientIps = reservation.Instances.map(function(instance) {
+								return instance.PublicIpAddress
 							})
+
+							console.log("Client ips ", clientIps)
+
+							var collectedData = []
+
+							setInterval(function(intervalReference) {
+								clientIps
+									.filter(function(clientIp) { return !(clientIp in collectedData) })
+									.forEach(function(clientIp) {
+
+									var conn = new SSHClient();
+
+									conn.on('ready', function() {
+										conn.exec("cat done", function(err, stream) {
+											if (err) {
+												console.log(err);
+											}
+
+											stream.on("close", function(code, signal) {
+												conn.end();
+											})
+
+											stream.on('data', function(data) {
+												collectedData[clientIp] = JSON.parse(data)
+
+												console.log("Received data")
+
+												if (Object.size(collectedData) === clientIps.length) {
+													console.log("Instances finished")
+													for (ip in collectedData) {
+														console.log(ip, collectedData[ip].allMessagesReceived)
+													}
+													clearTimeout(intervalReference)
+												}
+											}).stderr.on('data', function(data) {
+												console.log("STDERR: " + data)
+											});
+
+										});
+									})
+
+									conn.on("error", function(err) {
+										console.log("SSH" + err)
+									})
+
+									conn.connect({
+										host: clientIp,
+										port: 22,
+										username: 'ubuntu',
+										privateKey: fs.readFileSync('/Users/harbu1/.ssh/eric.pem')
+									});
+								})
+							}, 1000 * 60)
 						})
 					})
 				})
