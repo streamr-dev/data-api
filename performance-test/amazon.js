@@ -25,7 +25,7 @@ var serverParams = {
 
 var clientParams = {
 	ImageId: "ami-c8a5eebf",     // Ubuntu 14.10 amd64 HVM
-	InstanceType: "t2.medium",
+	InstanceType: "c4.large",
 	MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
 	MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
 	KeyName: "eric",
@@ -101,6 +101,9 @@ stream.on("finish", function() {
 
 					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress;
 
+					console.log("Server running at " +
+							data.Reservations[0].Instances[0].PublicIpAddress);
+
 					clientUserData = clientUserData
 						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
 
@@ -121,13 +124,26 @@ stream.on("finish", function() {
 						})
 						console.log("Created instances", instanceIds)
 
-						params = {
-							Resources: instanceIds,
-							Tags: [{ Key: "Owner", Value: "eric" }]
-						}
+							params = {
+								Resources: instanceIds,
+								Tags: [{ Key: "Owner", Value: "eric" }]
+							}
 
 						ec2.createTags(params, function(err) {
 							console.log("Tagging instance", err ? "failure" : "success")
+						})
+
+						ec2.waitFor("instanceRunning", { InstanceIds: instanceIds }, function(err, data) {
+							if (err) {
+								console.log("Instance could not be run", err)
+									return
+							}
+
+							data.Reservations.forEach(function(reservation) {
+								console.log(reservation.Instances.map(function(instance) {
+									return instance.PublicIpAddress;
+								}))
+							})
 						})
 					})
 				})

@@ -42,6 +42,9 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 	if (cb) {
 			cb(topic)
 	}
+
+	console.log("info: all clients unsubscribed, quitting...".green)
+	process.exit()
 }
 
 FakeKafkaHelper.prototype.sendNextMessage = function() {
@@ -88,7 +91,8 @@ function startMessageSendingLoop() {
 	kafkaHelper.sendNextMessage()
 	var timeSpent = (new Date).getTime() - startTime
 
-	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES_TO_SEND) {
+	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES) {
+		fs.writeFileSync("done", "ok")
 		console.log("info: all messages have been sent".green)
 		kafkaHelper.wstream.end()
 	} else {

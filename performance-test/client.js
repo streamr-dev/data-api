@@ -3,7 +3,6 @@ var fs = require("fs")
 var StreamrClient = require("./lib/streamr-client/streamr-client.js").StreamrClient
 var constants = require("./constants.js")
 
-
 function PerformanceTestClient(clientId, wstream) {
 	this.clientId = clientId
 	this.isConnected = false
@@ -12,6 +11,8 @@ function PerformanceTestClient(clientId, wstream) {
 	this.maxTimeDiff = Number.NEGATIVE_INFINITY
 	this.minTimeDiff = Number.POSITIVE_INFINITY
 	this.wstream = wstream
+	this.wasSubscribed = false
+	this.wasConnected = false
 
 	var that = this
 
@@ -24,7 +25,12 @@ function PerformanceTestClient(clientId, wstream) {
 	console.log("Created client " + this.clientId + " for " + this.client.options.server)
 
 	this.client.bind("connected", function() {
-		that.isConnected = true;
+		that.isConnected = true
+		that.wasConnected = true
+	})
+
+	this.client.bind("disconnected", function() {
+		that.isConnected = false
 	})
 
 	this.client.subscribe(
@@ -33,8 +39,6 @@ function PerformanceTestClient(clientId, wstream) {
 
 				// Calculate latency. Assume server and client time are synchronized.
 				var timeDiff = (new Date).getTime() - timestamp
-				console.assert(timeDiff >= -150, "server time in future w.r.t client," +
-						" difference = " + timeDiff)
 
 				// Keep track of maximum and minimum latency
 				that.maxTimeDiff = Math.max(that.maxTimeDiff, timeDiff)
@@ -45,6 +49,11 @@ function PerformanceTestClient(clientId, wstream) {
 
 				// Order not preserved
 				that.wstream.write(that.clientId + "," + timeDiff + "," + counter + "\n")
+
+				if (that.numOfMessagesReceived == constants.NUM_OF_MESSAGES) {
+					that.wasSubscribed = that.client.subsByStream[constants.STREAM_ID][0].subscribed
+					that.client.disconnect()
+				}
 			},
 			{}
 	)
@@ -52,10 +61,6 @@ function PerformanceTestClient(clientId, wstream) {
 
 PerformanceTestClient.prototype.start = function() {
 	this.client.connect()
-}
-
-PerformanceTestClient.prototype.isSubscribed = function() {
-	return this.client.subsByStream[constants.STREAM_ID][0].subscribed
 }
 
 
@@ -81,15 +86,35 @@ wstream.cork()
 
 setInterval(function() {
 	var startTime = (new Date).getTime()
-	console.log("Log write took")
 	wstream.uncork()
 	wstream.cork()
 	var diff = (new Date).getTime() - startTime
 	console.log("Writing to file took (" + diff + " ms)")
 }, 5000)
 
-// When process is killed, print out stats
+setInterval(function() {
+	var startTime = (new Date).getTime()
+
+	var totalConnectedClients = clients.filter(function(client) {
+		return client.isConnected
+	}).length
+
+
+	if (totalConnectedClients === 0) {
+		process.exit()
+	}
+
+	var diff = (new Date).getTime() - startTime
+	console.log("Active connections " + totalConnectedClients)
+	console.log("Scanning client connections took (" + diff + " ms)")
+}, 10000)
+
 process.on("SIGINT", function() {
+	process.exit()
+})
+
+// When process is killed, print out stats
+process.on("exit", function() {
 	wstream.end();
 
 	var numOfConnects = 0
@@ -102,8 +127,8 @@ process.on("SIGINT", function() {
 	var minLatency = Number.POSITIVE_INFINITY
 
 	clients.map(function(client) {
-		numOfConnects += client.isConnected
-		numOfSubscribes += client.isSubscribed()
+		numOfConnects += client.wasConnected
+		numOfSubscribes += client.wasSubscribed
 		numOfMessagesReceivedPerClient.push(client.numOfMessagesReceived)
 		meanLatencies.push(client.sumOfTimeDiffs / client.numOfMessagesReceived)
 		minLatencies.push(client.minTimeDiff)
@@ -117,16 +142,19 @@ process.on("SIGINT", function() {
 	var minMean = meanOfArray(minLatencies)
 	var maxMean = meanOfArray(maxLatencies)
 
-	console.log("Number of connects " + numOfConnects)
-	console.log("Number of subscribes " + numOfSubscribes)
-	console.log("Numbers of messages received " + numOfMessagesReceivedPerClient)
-	console.log("")
-	console.log("---- Latency ----")
-	//console.log("Mean latencies" + meanLatencies)
-	console.log("Interval [" + [minLatency, maxLatency] + "] ms")
-	console.log("Mean " + grandMean  + " ms")
-	console.log("Mean min and max [" + [minMean, maxMean] + "] ms")
-	process.exit()
+	fs.writeFileSync("done", JSON.stringify({
+		connects: numOfConnects,
+		subscribes: numOfSubscribes,
+		messagesReceived: numOfMessagesReceivedPerClient,
+		allMessagesReceived: numOfMessagesReceivedPerClient.every(function(x) {
+			return x === constants.NUM_OF_MESSAGES
+		}),
+		latency: {
+			interval: [minLatency, maxLatency],
+			mean: grandMean,
+			meanRange: [minMean, maxMean]
+		}
+	}, null, 4))
 })
 
 
