@@ -22,6 +22,7 @@ function FakeKafkaHelper() {
 	this.fakeOffSet = 0
 	this.numOfSubscribes = 0
 	this.lastMessageEmittedAt = null
+	this.sumOfMessageIntervals = 0
 	this.wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
 	this.wstream.write("latency,offset\n")
 }
@@ -66,6 +67,7 @@ FakeKafkaHelper.prototype.sendNextMessage = function() {
 		if (this.lastMessageEmittedAt != null) {
 			var diff = messageEmittedAt - this.lastMessageEmittedAt
 			this.wstream.write(diff + "," + (this.fakeOffSet - 1) + "\n")
+			this.sumOfMessageIntervals += diff
 		}
 
 		this.lastMessageEmittedAt = messageEmittedAt
@@ -92,12 +94,15 @@ function startMessageSendingLoop() {
 	var timeSpent = (new Date).getTime() - startTime
 
 	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES) {
-		fs.writeFileSync("done", "ok")
+		fs.writeFileSync("done", JSON.stringify({
+			allSent: true,
+			msgRate: kafkaHelper.sumOfMessageIntervals / (constants.NUM_OF_MESSAGES - 1)
+		}))
 		console.log("info: all messages have been sent".green)
 		kafkaHelper.wstream.end()
 	} else {
 		setTimeout(startMessageSendingLoop,
-				Math.max(0, constants.MESSAGE_RATE_IN_MILLIS - timeSpent))
+				Math.max(0, constants.MESSAGE_RATE_IN_MILLIS - timeSpent - 5))
 	}
 }
 

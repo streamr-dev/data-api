@@ -105,7 +105,8 @@ stream.on("finish", function() {
 						return
 					}
 
-					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress;
+					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress
+					var publicServerIp = data.Reservations[0].Instances[0].PublicIpAddress
 
 					console.log("Server running at " +
 							data.Reservations[0].Instances[0].PublicIpAddress);
@@ -174,13 +175,18 @@ stream.on("finish", function() {
 											stream.on('data', function(data) {
 												collectedData[clientIp] = JSON.parse(data)
 
-												console.log("Received data")
+												console.log(collectedData[clientIp])
 
 												if (Object.size(collectedData) === clientIps.length) {
 													console.log("Instances finished")
 													for (ip in collectedData) {
-														console.log(ip, collectedData[ip].allMessagesReceived)
+														console.log(ip,
+																collectedData[ip].allMessagesReceived,
+																collectedData[ip].latency.mean,
+																collectedData[ip].latency.interval
+														)
 													}
+													collectServerData(publicServerIp)
 													clearTimeout(intervalReference)
 												}
 											}).stderr.on('data', function(data) {
@@ -209,3 +215,37 @@ stream.on("finish", function() {
 		}
 	})
 })
+
+function collectServerData(serverIp) {
+	var conn = new SSHClient()
+
+	conn.on('ready', function() {
+		conn.exec("cat done", function(err, stream) {
+			if (err) {
+				console.log(err);
+			}
+
+			stream.on("close", function(code, signal) {
+				conn.end();
+			})
+
+			stream.on('data', function(data) {
+				console.log("Server:", JSON.parse(data))
+			}).stderr.on('data', function(data) {
+				console.log("STDERR: " + data)
+			})
+		})
+	})
+
+	conn.connect({
+		host: serverIp,
+		port: 22,
+		username: 'ubuntu',
+		privateKey: fs.readFileSync('/Users/harbu1/.ssh/eric.pem')
+	});
+}
+
+// TODO: ec2 shutdowns
+// TODO: collecting latency.csv files
+// TODO: better error handling
+// TODO: refactor callback hell

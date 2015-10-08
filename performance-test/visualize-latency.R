@@ -13,8 +13,8 @@ PlotLatency <- function(latency.data) {
   plot.ts(latency.data$latency,
           ylab="Latency in ms",
           main="Latency over time",
-          col="gray",
-          log="y"   # logarithmic scale
+          col="gray"
+          #log="y"   # logarithmic scale
           )
   lines(MovingAverage(latency.data$latency, 5000), col="black", lwd=2)
 }
