@@ -12,7 +12,7 @@ AWS.config.region = "eu-west-1"
 
 var serverParams = {
 	ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
-	InstanceType: "t2.large",
+	InstanceType: "m4.xlarge",
 	MinCount: 1,
 	MaxCount: 1,
 	KeyName: "eric",
