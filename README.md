@@ -12,6 +12,12 @@ Example of starting the server in dev:
 
 `node start-server.js --zookeeper dev.unifina:2181 --port 8889`
 
+
+### Performance tests
+
+See [performance-test/README.md](performance-test/README.md)
+
+
 # Protocol
 
 ## Sent by client
