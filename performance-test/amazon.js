@@ -4,11 +4,14 @@ var zlib = require("zlib")
 var fstream = require("fstream")
 var streamBuffers = require("stream-buffers")
 var AWS = require("aws-sdk")
+var Promise = require("promise")
 var SSHClient = require("ssh2").Client;
-
 var constants = require("./constants.js")
 
+
 AWS.config.region = "eu-west-1"
+
+var keyFile = "/Users/harbu1/.ssh/eric.pem"
 
 var serverParams = {
 	ImageId: "ami-c8a5eebf", // Ubuntu 14.10 amd64 HVM
@@ -26,7 +29,7 @@ var serverParams = {
 
 var clientParams = {
 	ImageId: "ami-c8a5eebf",     // Ubuntu 14.10 amd64 HVM
-	InstanceType: "c4.large",
+	InstanceType: "t2.micro",
 	MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
 	MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
 	KeyName: "eric",
@@ -37,6 +40,9 @@ var clientParams = {
 	SubnetId: "subnet-18abf07d"  // VPC
 }
 
+var ec2 = new AWS.EC2()
+
+// Size of javascript object (or associatve array)
 Object.size = function(obj) {
     var size = 0, key;
     for (key in obj) {
@@ -45,207 +51,258 @@ Object.size = function(obj) {
     return size;
 };
 
-var writableStreamBuffer = new streamBuffers.WritableStreamBuffer({
-	initialSize: (500 * 1024),
-	incrementAmount: (500 * 1024)
-})
 
-var stream = fstream.Reader({
-	"path": "../../streamr-socketio-server",
-	"type": "Directory"
-}).pipe(tar.Pack())
-	.pipe(zlib.Gzip())
-	.pipe(writableStreamBuffer)
+// Reads the streamr-socketio-server project into RAM and gzips it
+var readGzipedProjectToBuffer = function() {
+	return new Promise(function(resolve, reject) {
 
-stream.on("finish", function() {
+		var writableStreamBuffer = new streamBuffers.WritableStreamBuffer({
+			initialSize: (500 * 1024),
+			incrementAmount: (500 * 1024)
+		})
 
-	console.log("read project to RAM")
+		var stream = fstream.Reader({
+			"path": "../../streamr-socketio-server",
+			"type": "Directory"
+		}).pipe(tar.Pack())
+			.pipe(zlib.Gzip())
+			.pipe(writableStreamBuffer)
 
-	// Upload file to s3
-	var s3 = new AWS.S3()
+		stream.on("error", function(err) {
+			console.error("failed to read project into RAM")
+			reject(err)
+		})
 
-	s3.upload({
-		Bucket: "streamr-socketio-stresstest",
-		Key: "stress-test.tar.gz",
-		Body: writableStreamBuffer.getContents()
-	}, function(err) {
-		if (err) {
-			console.log("error when uploading project to s3:", err)
-		} else {
-			console.log("project uploaded to s3")
+		stream.on("finish", function() {
+			console.log("read project into RAM")
+			resolve(writableStreamBuffer.getContents())
+		})
+	})
+}
 
-		  // Start up server instance
-			var ec2 = new AWS.EC2()
+var uploadToS3 = function(buffer) {
+	return new Promise(function(resolve, reject) {
+		var s3 = new AWS.S3()
 
-			var credentials = fs.readFileSync("/Users/harbu1/.aws/credentials", "utf-8")
-			var commonUserData = fs.readFileSync("amazon/common_user_data.sh", "utf-8")
-				.replace("<CREDENTIALS>", credentials)
+		s3.upload({
+			Bucket: "streamr-socketio-stresstest",
+			Key: "stress-test.tar.gz",
+			Body: buffer
+		}, function(err) {
+			if (err) {
+				console.error("error when uploading project to s3:", err)
+				reject(err)
+			} else {
+				console.log("project uploaded to s3")
+				resolve({})
+			}
+		})
+	})
+}
+
+var credentials = fs.readFileSync("/Users/harbu1/.aws/credentials", "utf-8")
+var commonUserData = fs.readFileSync("amazon/common_user_data.sh", "utf-8")
+	.replace("<CREDENTIALS>", credentials)
+
+var serverUserData = commonUserData + "\n" + fs.readFileSync("amazon/server_user_data.sh", "utf-8")
+
+var composeServerUserData = function(obj) {
+	return new Promise(function(resolve, reject) {
+		try {
+			console.log("server data composed")
+			resolve(new Buffer(serverUserData).toString("base64"))
+		} catch (err) {
+			console.log("failed to compose server user data")
+			reject(err)
+		}
+	})
+}
+
+var composeClientUserData = function(serverIps) {
+	return new Promise(function(resolve, reject) {
+		try {
+
+			var serverIp = serverIps[0].privateIp
 
 			var clientUserData = commonUserData + "\n" +
 				fs.readFileSync("amazon/client_user_data.sh", "utf-8")
 
-			var serverUserData = commonUserData + "\n" +
-				fs.readFileSync("amazon/server_user_data.sh", "utf-8")
+			clientUserData = clientUserData
+				.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
 
-			serverParams.UserData = new Buffer(serverUserData).toString("base64")
+			resolve(new Buffer(clientUserData).toString("base64"))
+		} catch (err) {
+			console.log("failed to compose client user data")
+			reject(err)
+		}
+	})
+}
 
-			ec2.runInstances(serverParams, function(err, data) {
+var createEc2Instances = function(params) {
+	return function(userData) {
+		return new Promise(function(resolve, reject) {
+			params.UserData = userData
+			ec2.runInstances(params, function(err, data) {
 				if (err) {
-					console.log("Could not create instance", err)
-					return
+					console.error("could not create instance: ", err)
+					reject(err)
+				} else {
+					var instanceIds = data.Instances.map(function(instance) {
+						return instance.InstanceId
+					})
+					console.log("instances have been created:", instanceIds)
+					resolve(instanceIds)
 				}
+			})
+		})
+	}
+}
 
-				console.log("server instance created, waiting to obtain ip address")
-
-				var serverInstanceId = data.Instances[0].InstanceId
-
-				ec2.waitFor("instanceRunning", { InstanceIds: [serverInstanceId] }, function(err, data) {
-					if (err) {
-						console.log("Instance could not be run", err)
-						return
+var waitForIpAddressAssignments = function(instanceIds) {
+	console.log("waiting for ip addresses")
+	return new Promise(function(resolve, reject) {
+		ec2.waitFor("instanceRunning", { InstanceIds: instanceIds }, function(err, data) {
+			if (err) {
+				console.error("Failed to obtain ip address for ", instanceIds)
+				reject(err)
+			} else {
+				var ips = data.Reservations[0].Instances.map(function(instance) {
+					return {
+						privateIp: instance.PrivateIpAddress,
+						publicIp: instance.PublicIpAddress
 					}
+				})
+				console.log("Obtained ", ips)
+				resolve(ips)
+			}
+		})
+	})
+}
 
-					var serverIp = data.Reservations[0].Instances[0].PrivateIpAddress
-					var publicServerIp = data.Reservations[0].Instances[0].PublicIpAddress
+var monitorClientsForResults = function(ips) {
 
-					console.log("Server running at " +
-							data.Reservations[0].Instances[0].PublicIpAddress);
+	var collectedData = []
 
-					clientUserData = clientUserData
-						.replace("<SERVER>", "http://" + serverIp + ":" + constants.SERVER_PORT)
+	var publicIps = ips.map(function(ip) {
+		return ip.publicIp
+	})
 
-					console.log(clientUserData)
+	console.log("monitor clients for done signals")
 
-					clientParams.UserData = new Buffer(clientUserData).toString("base64")
+	return new Promise(function(resolve, reject) {
+		setInterval(function(intervalReference) {
+			publicIps
+				.filter(function(ip) { return !(ip in collectedData) })
+				.forEach(function(ip) {
 
-					// Create the client instances
-					ec2.runInstances(clientParams, function(err, data) {
+				var conn = new SSHClient();
+
+				conn.on('ready', function() {
+					conn.exec("cat done", function(err, stream) {
 						if (err) {
-							console.log("Could not create instance", err)
-							return
+							console.log(err);
 						}
 
-
-						var instanceIds = data.Instances.map(function(instance) {
-							return instance.InstanceId
+						stream.on("close", function(code, signal) {
+							conn.end();
 						})
-						console.log("Created instances", instanceIds)
 
-							params = {
-								Resources: instanceIds,
-								Tags: [{ Key: "Owner", Value: "eric" }]
+						stream.on('data', function(data) {
+							collectedData[ip] = JSON.parse(data)
+
+							console.log(collectedData[ip])
+
+							if (Object.size(collectedData) === publicIps.length) {
+								console.log("all client instances are done.")
+								for (ip in collectedData) {
+									console.log(ip,
+											collectedData[ip].allMessagesReceived,
+											collectedData[ip].latency.mean,
+											collectedData[ip].latency.interval
+									)
+								}
+
+								// Step 8: get server's results
+								resolve(collectedData)
+								clearTimeout(intervalReference)
 							}
+						}).stderr.on('data', function(data) {
+							console.log("STDERR: " + data)
+						});
+					});
+				})
 
-						ec2.createTags(params, function(err) {
-							console.log("Tagging instance", err ? "failure" : "success")
-						})
+				conn.on("error", function(err) {
+					console.log("SSH" + err)
+				})
 
-						ec2.waitFor("instanceRunning", { InstanceIds: instanceIds }, function(err, data) {
-							if (err) {
-								console.log("Instance could not be run", err)
-									return
-							}
+				conn.connect({
+					host: ip,
+					port: 22,
+					username: 'ubuntu',
+					privateKey: fs.readFileSync(keyFile)
+				});
+			})
+		}, 1000 * 60)
+	})
+}
 
-							var reservation = data.Reservations[0]
-							var clientIps = reservation.Instances.map(function(instance) {
-								return instance.PublicIpAddress
-							})
+var collectServerData = function(serverIp, obj) {
+	return function(obj) {
+		return new Promise(function(resolve ,reject) {
+			var conn = new SSHClient()
 
-							console.log("Client ips ", clientIps)
+			conn.on('ready', function() {
+				conn.exec("cat done", function(err, stream) {
+					if (err) {
+						console.log(err);
+					}
 
-							var collectedData = []
+					stream.on("close", function(code, signal) {
+						conn.end();
+					})
 
-							setInterval(function(intervalReference) {
-								clientIps
-									.filter(function(clientIp) { return !(clientIp in collectedData) })
-									.forEach(function(clientIp) {
-
-									var conn = new SSHClient();
-
-									conn.on('ready', function() {
-										conn.exec("cat done", function(err, stream) {
-											if (err) {
-												console.log(err);
-											}
-
-											stream.on("close", function(code, signal) {
-												conn.end();
-											})
-
-											stream.on('data', function(data) {
-												collectedData[clientIp] = JSON.parse(data)
-
-												console.log(collectedData[clientIp])
-
-												if (Object.size(collectedData) === clientIps.length) {
-													console.log("Instances finished")
-													for (ip in collectedData) {
-														console.log(ip,
-																collectedData[ip].allMessagesReceived,
-																collectedData[ip].latency.mean,
-																collectedData[ip].latency.interval
-														)
-													}
-													collectServerData(publicServerIp)
-													clearTimeout(intervalReference)
-												}
-											}).stderr.on('data', function(data) {
-												console.log("STDERR: " + data)
-											});
-
-										});
-									})
-
-									conn.on("error", function(err) {
-										console.log("SSH" + err)
-									})
-
-									conn.connect({
-										host: clientIp,
-										port: 22,
-										username: 'ubuntu',
-										privateKey: fs.readFileSync('/Users/harbu1/.ssh/eric.pem')
-									});
-								})
-							}, 1000 * 60)
-						})
+					stream.on('data', function(data) {
+						console.log("Server:", JSON.parse(data))
+						resolve()
+					}).stderr.on('data', function(data) {
+						reject(data)
 					})
 				})
 			})
-		}
-	})
-})
 
-function collectServerData(serverIp) {
-	var conn = new SSHClient()
-
-	conn.on('ready', function() {
-		conn.exec("cat done", function(err, stream) {
-			if (err) {
-				console.log(err);
-			}
-
-			stream.on("close", function(code, signal) {
-				conn.end();
-			})
-
-			stream.on('data', function(data) {
-				console.log("Server:", JSON.parse(data))
-			}).stderr.on('data', function(data) {
-				console.log("STDERR: " + data)
-			})
+			conn.connect({
+				host: serverIp,
+				port: 22,
+				username: 'ubuntu',
+				privateKey: fs.readFileSync(keyFile)
+			});
 		})
-	})
-
-	conn.connect({
-		host: serverIp,
-		port: 22,
-		username: 'ubuntu',
-		privateKey: fs.readFileSync('/Users/harbu1/.ssh/eric.pem')
-	});
+	}
 }
+
+
+var serverIpsPromise = readGzipedProjectToBuffer()
+	.then(uploadToS3)
+	.then(composeServerUserData)
+	.then(createEc2Instances(serverParams))
+	.then(waitForIpAddressAssignments)
+
+
+var clientIpsPromise = serverIpsPromise
+	.then(composeClientUserData)
+	.then(createEc2Instances(clientParams))
+	.then(waitForIpAddressAssignments)
+
+Promise.all([serverIpsPromise, clientIpsPromise]).then(function(data) {
+	serverIps = data[0]
+	clientIps = data[1]
+
+		monitorClientsForResults(clientIps)
+			.then(collectServerData(serverIps[0].publicIp))
+			.done()
+})
 
 // TODO: ec2 shutdowns
 // TODO: collecting latency.csv files
 // TODO: better error handling
-// TODO: refactor callback hell
