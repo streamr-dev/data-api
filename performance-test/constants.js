@@ -5,22 +5,15 @@ function define(name, value) {
 	});
 }
 
-// amazon.js
-define("NUM_OF_EC2_INSTANCES", 11)
-
-// client.js
-define("NUM_OF_CLIENTS_PER_INSTANCE", 1000)
-define("SERVER_URL", "http://localhost:8890");
-define("CLIENT_RAMPUP_IN_MILLIS", 100)
-define("LATENCY_LOG_FILE", "latencies.csv")
-
-// server.js
-define("MESSAGE_RATE_IN_MILLIS", 50)
+define("NUM_OF_EC2_INSTANCES", 2)
+define("NUM_OF_CLIENTS_PER_INSTANCE", 1)
+define("KAFKA_URL", "dev.unifina:2181")
+define("SERVER_URL", "http://localhost:8890")
+define("CLIENT_RAMPUP_IN_MILLIS", 15)
 define("TOTAL_CLIENTS",
 		(this.NUM_OF_EC2_INSTANCES - 1) * this.NUM_OF_CLIENTS_PER_INSTANCE)
-
-
-// shared
+define("MESSAGE_RATE_IN_MILLIS", 15000)
+define("LATENCY_LOG_FILE", "latencies.csv")
 define("NUM_OF_MESSAGES", 1000)
 define("SERVER_PORT", 8890);
 define("STREAM_ID", "testStreamId");
