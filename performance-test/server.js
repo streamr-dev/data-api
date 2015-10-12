@@ -59,9 +59,6 @@ var kafkaHelper = new FakeKafkaHelper()
 var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
 
 var dataGenerator = new DataGenerator({
-	messageRate: constants.MESSAGE_RATE_IN_MILLIS,
-	streamId: constants.STREAM_ID,
-	numOfMessages: constants.NUM_OF_MESSAGES,
 	sendCondition: function() {
 		return kafkaHelper.numOfSubscribes === constants.TOTAL_CLIENTS
 	}

@@ -7,6 +7,8 @@ var constants = require("./constants.js")
 
 
 
+// Logs indiviual latencies to file LATENCY_LOG_FILE and when all messages have
+// been sent, logs the summary information to file "done".
 function LatencyLogger(dataGenerator) {
 	this.lastMessageEmittedAt = null
 	this.sumOfMessageIntervals = 0
@@ -39,14 +41,14 @@ LatencyLogger.prototype._done = function() {
 
 
 
-
+// Emits fake data on a regular interval to be consumed.
 function DataGenerator(opts) {
 	this.fakeOffSet = 0
 	new LatencyLogger(this)
 
-	this.messageRate = opts.messageRate || new Error("must specify 'messageRate'")
-	this.streamId = opts.streamId || new Error("must specify 'streamId'")
-	this.numOfMessages = opts.numOfMessages || new Error("must specify 'numOfMessages'")
+	this.messageRate = opts.messageRate || constants.MESSAGE_RATE_IN_MILLIS
+	this.streamId = opts.streamId || constants.STREAM_ID
+	this.numOfMessages = opts.numOfMessages || constants.NUM_OF_MESSAGES
 	this.sendCondition = opts.sendCondition || new Error("must specify 'sendCondition'")
 }
 
