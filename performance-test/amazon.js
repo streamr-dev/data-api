@@ -281,25 +281,50 @@ var collectServerData = function(serverIp, obj) {
 	}
 }
 
+var terminateInstances = function(instanceIds) {
+	return function() {
+		return new Promise(function(resolve, reject) {
+			ec2.terminateInstances({InstanceIds: instanceIds}, function(err, data) {
+				if (err) {
+					console.error("could not terminate instances: ", err)
+					reject(err)
+				} else {
+					console.log("instances have been terminated:", instanceIds)
+					resolve()
+				}
+			})
+		})
+	}
+}
 
-var serverIpsPromise = readGzipedProjectToBuffer()
+var serverInstanceIdsPromise = readGzipedProjectToBuffer()
 	.then(uploadToS3)
 	.then(composeServerUserData)
 	.then(createEc2Instances(serverParams))
+
+var serverIpsPromise = serverInstanceIdsPromise
 	.then(waitForIpAddressAssignments)
 
-
-var clientIpsPromise = serverIpsPromise
+var clientInstanceIdsPromise = serverIpsPromise
 	.then(composeClientUserData)
 	.then(createEc2Instances(clientParams))
+
+var clientIpsPromise = clientInstanceIdsPromise
 	.then(waitForIpAddressAssignments)
 
-Promise.all([serverIpsPromise, clientIpsPromise]).then(function(data) {
+Promise.all([
+		serverIpsPromise,
+		clientIpsPromise,
+		clientInstanceIdsPromise,
+		serverInstanceIdsPromise
+]).then(function(data) {
 	serverIps = data[0]
 	clientIps = data[1]
+	instanceIds = data[2].concat(data[3])
 
 		monitorClientsForResults(clientIps)
 			.then(collectServerData(serverIps[0].publicIp))
+			.then(terminateInstances(instanceIds))
 			.done()
 })
 
