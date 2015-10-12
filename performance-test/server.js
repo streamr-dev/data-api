@@ -11,20 +11,15 @@
  *   d) if more subscriptions occur than was expected, server exits.
  */
 
-var fs = require("fs")
 var events = require('events')
 var colors = require("colors")
 var SocketIoServer = require('../lib/socketio-server').SocketIoServer
-var DataGenerator = require("./data-generator")
+var DataGenerator = require("./data-generator").DataGenerator
+var LatencyLogger = require("./data-generator").LatencyLogger
 var constants = require("./constants.js")
-
 
 function FakeKafkaHelper() {
 	this.numOfSubscribes = 0
-	this.lastMessageEmittedAt = null
-	this.sumOfMessageIntervals = 0
-	this.wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
-	this.wstream.write("latency,offset\n")
 }
 
 FakeKafkaHelper.prototype.__proto__ = events.EventEmitter.prototype;
@@ -58,23 +53,10 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 
 FakeKafkaHelper.prototype.sendNextMessage = function(data, streamId, offset) {
 	this.emit('message', data, streamId)
-
-	// Calculate time difference since last invocation of this method
-	var messageEmittedAt = (new Date).getTime()
-	if (this.lastMessageEmittedAt != null) {
-		var diff = messageEmittedAt - this.lastMessageEmittedAt
-		this.wstream.write(diff + "," + offset + "\n")
-		this.sumOfMessageIntervals += diff
-	}
-
-	this.lastMessageEmittedAt = messageEmittedAt
-	console.log("Sent message with offset " + offset + " (" + diff +" ms)")
 }
 
 var kafkaHelper = new FakeKafkaHelper()
 var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
-
-console.log("Server started on port " + constants.SERVER_PORT)
 
 var dataGenerator = new DataGenerator({
 	messageRate: constants.MESSAGE_RATE_IN_MILLIS,
@@ -87,15 +69,11 @@ var dataGenerator = new DataGenerator({
 
 dataGenerator.on("newMessage", kafkaHelper.sendNextMessage.bind(kafkaHelper))
 dataGenerator.on("done", function() {
-	fs.writeFileSync("done", JSON.stringify({
-		allSent: true,
-		msgRate: kafkaHelper.sumOfMessageIntervals / (constants.NUM_OF_MESSAGES - 1)
-	}))
 	console.log("info: all messages have been sent".green)
-	kafkaHelper.wstream.end()
 })
-
 dataGenerator.start()
+
+console.log("Server started on port " + constants.SERVER_PORT)
 
 if (global.gc) {
 	setInterval(function() {

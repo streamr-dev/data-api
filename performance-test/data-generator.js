@@ -1,9 +1,48 @@
 "use strict"
 
+var fs = require("fs")
 var events = require('events')
+var constants = require("./constants.js")
+
+
+
+
+function LatencyLogger(dataGenerator) {
+	this.lastMessageEmittedAt = null
+	this.sumOfMessageIntervals = 0
+	this.wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
+	this.wstream.write("latency,offset\n")
+	dataGenerator.on("newMessage", this._log.bind(this))
+	dataGenerator.on("done", this._done.bind(this))
+}
+
+LatencyLogger.prototype._log = function(message, streamId, offset) {
+	var messageEmittedAt = (new Date).getTime()
+
+	if (this.lastMessageEmittedAt != null) {
+		var diff = messageEmittedAt - this.lastMessageEmittedAt
+		this.wstream.write(diff + "," + offset + "\n")
+		this.sumOfMessageIntervals += diff
+	}
+
+	this.lastMessageEmittedAt = messageEmittedAt
+	console.log("Sent message with offset " + offset + " (" + diff +" ms)")
+}
+
+LatencyLogger.prototype._done = function() {
+	fs.writeFileSync("done", JSON.stringify({
+		allSent: true,
+		msgRate: this.sumOfMessageIntervals / (constants.NUM_OF_MESSAGES - 1)
+	}))
+	this.wstream.end()
+}
+
+
+
 
 function DataGenerator(opts) {
 	this.fakeOffSet = 0
+	new LatencyLogger(this)
 
 	this.messageRate = opts.messageRate || new Error("must specify 'messageRate'")
 	this.streamId = opts.streamId || new Error("must specify 'streamId'")
@@ -41,4 +80,7 @@ DataGenerator.prototype.start = function() {
 	}
 }
 
-module.exports = DataGenerator
+module.exports = {
+	DataGenerator: DataGenerator,
+	LatencyLogger: LatencyLogger
+}
