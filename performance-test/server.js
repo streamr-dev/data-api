@@ -15,11 +15,11 @@ var fs = require("fs")
 var events = require('events')
 var colors = require("colors")
 var SocketIoServer = require('../lib/socketio-server').SocketIoServer
+var DataGenerator = require("./data-generator")
 var constants = require("./constants.js")
 
 
 function FakeKafkaHelper() {
-	this.fakeOffSet = 0
 	this.numOfSubscribes = 0
 	this.lastMessageEmittedAt = null
 	this.sumOfMessageIntervals = 0
@@ -32,9 +32,17 @@ FakeKafkaHelper.prototype.__proto__ = events.EventEmitter.prototype;
 FakeKafkaHelper.prototype.subscribe = function(topic, fromOffset, cb) {
 	++this.numOfSubscribes
 
-	this.emit("subscribed", topic, this.fakeOffSet)
+	// Maximum allowed clients enforced
+	if (this.numOfSubscribes > constants.TOTAL_CLIENTS) {
+		console.log("error: more clients subscribed than expected".red)
+		process.kill()
+	}
+
+	var startingOffSet = 0
+
+	this.emit("subscribed", topic, startingOffSet)
 	if (cb) {
-		cb(topic, this.fakeOffSet)
+		cb(topic, startingOffSet)
 	}
 }
 
@@ -48,66 +56,46 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 	process.exit()
 }
 
-FakeKafkaHelper.prototype.sendNextMessage = function() {
+FakeKafkaHelper.prototype.sendNextMessage = function(data, streamId, offset) {
+	this.emit('message', data, streamId)
 
-	// Send data when all clients have subscribed
-	if (this.numOfSubscribes == constants.TOTAL_CLIENTS) {
-		var exampleData = {
-			b: [[5.5,24608],[5.495,97408],[5.49,51101],[5.485,67982],[5.48,44765]],
-			s: [[5.505,34631],[5.51,100912],[5.515,75603],[5.52,99476],[5.525,48575]],
-			_TS: (new Date).getTime(),
-			_S: constants.STREAM_ID,
-			_C: this.fakeOffSet++
-		}
-
-		kafkaHelper.emit('message', exampleData, constants.STREAM_ID)
-
-		// Calculate time difference since last invocation of this method
-		var messageEmittedAt = (new Date).getTime()
-		if (this.lastMessageEmittedAt != null) {
-			var diff = messageEmittedAt - this.lastMessageEmittedAt
-			this.wstream.write(diff + "," + (this.fakeOffSet - 1) + "\n")
-			this.sumOfMessageIntervals += diff
-		}
-
-		this.lastMessageEmittedAt = messageEmittedAt
-
-		console.log("Sent message with offset " + this.fakeOffSet +
-				" (" + diff +" ms)")
-
-	} else if (this.numOfSubscribes > constants.TOTAL_CLIENTS) {
-		console.log("error: more clients subscribed than expected".red)
-		process.kill()
-	} else {
-		return
+	// Calculate time difference since last invocation of this method
+	var messageEmittedAt = (new Date).getTime()
+	if (this.lastMessageEmittedAt != null) {
+		var diff = messageEmittedAt - this.lastMessageEmittedAt
+		this.wstream.write(diff + "," + offset + "\n")
+		this.sumOfMessageIntervals += diff
 	}
-}
 
+	this.lastMessageEmittedAt = messageEmittedAt
+	console.log("Sent message with offset " + offset + " (" + diff +" ms)")
+}
 
 var kafkaHelper = new FakeKafkaHelper()
 var server = new SocketIoServer(null, constants.SERVER_PORT, kafkaHelper)
 
-function startMessageSendingLoop() {
-
-	var startTime = (new Date).getTime()
-	kafkaHelper.sendNextMessage()
-	var timeSpent = (new Date).getTime() - startTime
-
-	if (kafkaHelper.fakeOffSet == constants.NUM_OF_MESSAGES) {
-		fs.writeFileSync("done", JSON.stringify({
-			allSent: true,
-			msgRate: kafkaHelper.sumOfMessageIntervals / (constants.NUM_OF_MESSAGES - 1)
-		}))
-		console.log("info: all messages have been sent".green)
-		kafkaHelper.wstream.end()
-	} else {
-		setTimeout(startMessageSendingLoop,
-				Math.max(0, constants.MESSAGE_RATE_IN_MILLIS - timeSpent - 5))
-	}
-}
-
 console.log("Server started on port " + constants.SERVER_PORT)
-startMessageSendingLoop()
+
+var dataGenerator = new DataGenerator({
+	messageRate: constants.MESSAGE_RATE_IN_MILLIS,
+	streamId: constants.STREAM_ID,
+	numOfMessages: constants.NUM_OF_MESSAGES,
+	sendCondition: function() {
+		return kafkaHelper.numOfSubscribes === constants.TOTAL_CLIENTS
+	}
+})
+
+dataGenerator.on("newMessage", kafkaHelper.sendNextMessage.bind(kafkaHelper))
+dataGenerator.on("done", function() {
+	fs.writeFileSync("done", JSON.stringify({
+		allSent: true,
+		msgRate: kafkaHelper.sumOfMessageIntervals / (constants.NUM_OF_MESSAGES - 1)
+	}))
+	console.log("info: all messages have been sent".green)
+	kafkaHelper.wstream.end()
+})
+
+dataGenerator.start()
 
 if (global.gc) {
 	setInterval(function() {
