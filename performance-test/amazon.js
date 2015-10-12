@@ -29,7 +29,7 @@ var serverParams = {
 
 var clientParams = {
 	ImageId: "ami-c8a5eebf",     // Ubuntu 14.10 amd64 HVM
-	InstanceType: "t2.micro",
+	InstanceType: "c4.large",
 	MinCount: constants.NUM_OF_EC2_INSTANCES - 1,
 	MaxCount: constants.NUM_OF_EC2_INSTANCES - 1,
 	KeyName: "eric",
