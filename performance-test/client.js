@@ -33,30 +33,32 @@ function PerformanceTestClient(clientId, wstream) {
 		that.isConnected = false
 	})
 
-	this.client.subscribe(
-			constants.STREAM_ID,
-			function (message, streamId, timestamp, counter) {
+	constants.STREAM_IDS.forEach(function(streamId) {
+		that.client.subscribe(
+				streamId,
+				function (message, streamId, timestamp, counter) {
 
-				// Calculate latency. Assume server and client time are synchronized.
-				var timeDiff = (new Date).getTime() - timestamp
+					// Calculate latency. Assume server and client time are synchronized.
+					var timeDiff = (new Date).getTime() - timestamp
 
-				// Keep track of maximum and minimum latency
-				that.maxTimeDiff = Math.max(that.maxTimeDiff, timeDiff)
-				that.minTimeDiff = Math.min(that.minTimeDiff, Math.max(timeDiff, 0))
+					// Keep track of maximum and minimum latency
+					that.maxTimeDiff = Math.max(that.maxTimeDiff, timeDiff)
+					that.minTimeDiff = Math.min(that.minTimeDiff, Math.max(timeDiff, 0))
 
-				that.sumOfTimeDiffs += Math.max(timeDiff, 0)
-				++that.numOfMessagesReceived
+					that.sumOfTimeDiffs += Math.max(timeDiff, 0)
+					++that.numOfMessagesReceived
 
-				// Order not preserved
-				that.wstream.write(that.clientId + "," + timeDiff + "," + counter + "\n")
+					// Order not preserved
+					that.wstream.write(streamId + "," + that.clientId + "," + counter + "," + timeDiff + "\n")
 
-				if (that.numOfMessagesReceived == constants.NUM_OF_MESSAGES) {
-					that.wasSubscribed = that.client.subsByStream[constants.STREAM_ID][0].subscribed
-					that.client.disconnect()
-				}
-			},
-			{}
-	)
+					if (that.numOfMessagesReceived === (constants.NUM_OF_MESSAGES * constants.STREAM_IDS.length)) {
+						that.wasSubscribed = true
+						that.client.disconnect()
+					}
+				},
+				{}
+		)
+	})
 }
 
 PerformanceTestClient.prototype.start = function() {
@@ -159,5 +161,5 @@ process.on("exit", function() {
 
 
 
-wstream.write("client,latency,offset\n")
+wstream.write("client,streamId,offset,latency\n")
 createAndConnectClient(wstream)
