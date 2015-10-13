@@ -13,8 +13,13 @@ var server = new SocketIoServer(constants.KAFKA_URL, constants.SERVER_PORT)
 var dataGenerator = new DataGenerator({
 	sendCondition: function() {
 		var rooms = server.io.sockets.adapter.rooms
-		return constants.STREAM_ID in rooms &&
-			Object.keys(rooms[constants.STREAM_ID]).length === constants.TOTAL_CLIENTS
+		for (var idx in constants.STREAM_IDS) {
+			var streamId = constants.STREAM_IDS[idx]
+			if (!(streamId in rooms) || Object.keys(rooms[streamId]).length !== constants.TOTAL_CLIENTS) {
+				return false
+			}
+		}
+		return true
 	}
 })
 
@@ -24,6 +29,7 @@ dataGenerator.on("newMessage", function(message, stream ,offset) {
 
 dataGenerator.on("done", function() {
 	console.log("info: all messages have been sent".green)
+	process.exit()
 })
 
 dataGenerator.start()

@@ -94,7 +94,8 @@ DataGenerator.prototype.start = function() {
 }
 
 DataGenerator.prototype._anyMessagesLeft = function() {
-	for (var streamId in this.streamIds) {
+	for (var idx in this.streamIds) {
+		var streamId = constants.STREAM_IDS[idx]
 		if (this.offSets[streamId] !== this.numOfMessages) {
 			return true
 		}
