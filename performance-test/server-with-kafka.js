@@ -29,6 +29,9 @@ dataGenerator.on("newMessage", function(message, stream ,offset) {
 
 dataGenerator.on("done", function() {
 	console.log("info: all messages have been sent".green)
+})
+
+server.kafka.on("unsubscribed", function() {
 	process.exit()
 })
 
