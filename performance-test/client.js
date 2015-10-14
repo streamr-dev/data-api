@@ -97,12 +97,16 @@ setInterval(function() {
 setInterval(function() {
 	var startTime = (new Date).getTime()
 
+	var haveAllConnected = clients.every(function(client) {
+		return client.wasConnected
+	})
+
 	var totalConnectedClients = clients.filter(function(client) {
 		return client.isConnected
 	}).length
 
 
-	if (totalConnectedClients === 0) {
+	if (haveAllConnected && totalConnectedClients === 0) {
 		process.exit()
 	}
 

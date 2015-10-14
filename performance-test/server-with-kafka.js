@@ -31,6 +31,11 @@ dataGenerator.on("done", function() {
 	console.log("info: all messages have been sent".green)
 })
 
+server.on("uiSent", function(data, channel) {
+	dataGenerator.logger.log(data._S, data._C, (new Date).getTime() - data._TS)
+})
+
+
 server.kafka.on("unsubscribed", function() {
 	process.exit()
 })

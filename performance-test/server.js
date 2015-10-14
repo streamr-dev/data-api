@@ -53,6 +53,7 @@ FakeKafkaHelper.prototype.unsubscribe = function(topic, cb) {
 
 FakeKafkaHelper.prototype.sendNextMessage = function(data, streamId, offset) {
 	this.emit('message', data, streamId)
+	dataGenerator.logger.log(streamId, offset)
 }
 
 var kafkaHelper = new FakeKafkaHelper()

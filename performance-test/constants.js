@@ -6,18 +6,18 @@ function define(name, value) {
 }
 
 // amazon.js
-define("NUM_OF_EC2_INSTANCES", 2)
+define("NUM_OF_EC2_INSTANCES", 11)
 
 // client.js
-define("NUM_OF_CLIENTS_PER_INSTANCE", 1)
+define("NUM_OF_CLIENTS_PER_INSTANCE", 100)
 define("SERVER_URL", "http://localhost:8890")
-define("CLIENT_RAMPUP_IN_MILLIS", 15)
+define("CLIENT_RAMPUP_IN_MILLIS", 100)
 
 // server.js / server-with-kafka.js / data-generator.js
-define("KAFKA_URL", "dev.unifina:2181")
+define("KAFKA_URL", "10.0.0.112:2181")
 define("TOTAL_CLIENTS",
 		(this.NUM_OF_EC2_INSTANCES - 1) * this.NUM_OF_CLIENTS_PER_INSTANCE)
-define("MESSAGE_RATE_IN_MILLIS", 500)
+define("MESSAGE_RATE_IN_MILLIS", 300)
 
 // shared
 define("LATENCY_LOG_FILE", "latencies.csv")

@@ -14,11 +14,10 @@ function LatencyLogger(dataGenerator) {
 	this.sumOfMessageIntervals = 0
 	this.wstream = fs.createWriteStream(constants.LATENCY_LOG_FILE)
 	this.wstream.write("streamId,offset,latency\n")
-	dataGenerator.on("newMessage", this._log.bind(this))
 	dataGenerator.on("done", this._done.bind(this))
 }
 
-LatencyLogger.prototype._log = function(message, streamId, offset) {
+LatencyLogger.prototype.log = function(streamId, offset) {
 	var messageEmittedAt = (new Date).getTime()
 
 	if (this.lastMessageEmittedAt != null) {
@@ -55,7 +54,7 @@ function DataGenerator(opts) {
 		_this.offSets[streamId] = 0
 	})
 
-	new LatencyLogger(this)
+	this.logger = new LatencyLogger(this)
 }
 
 DataGenerator.prototype.__proto__ = events.EventEmitter.prototype;
