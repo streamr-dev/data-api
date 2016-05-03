@@ -1,0 +1,3 @@
+[submodule "lib/streamr-http-api"]
+	path = lib/streamr-http-api
+	url = https://github.com/streamr-dev/streamr-http-api
