@@ -10,7 +10,7 @@ First make sure you have all the dependencies installed:
 
 Example of starting the server in dev:
 
-`node start-server.js --zookeeper dev.unifina:2181 --port 8889`
+`node socketio-server.js --zookeeper dev.streamr:2181 --port 8889`
 
 # Protocol
 
