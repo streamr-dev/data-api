@@ -10,6 +10,7 @@ describe('socketio-server', function () {
 	var kafkaMock
 	var kafkaSubs
 	var ioMock
+	var metricsMock
 	var socket
 
 	function createSocketMock(id) {
@@ -22,8 +23,8 @@ describe('socketio-server', function () {
 			console.log("SOCKET MOCK: Socket "+socket.id+" joined channel "+channel+", now on: "+socket.rooms)
 			if (!ioMock.sockets.adapter.rooms[channel]) {
 				ioMock.sockets.adapter.rooms[channel] = {}
-				ioMock.sockets.adapter.rooms[channel][socket.id] = socket
 			}
+			ioMock.sockets.adapter.rooms[channel][socket.id] = socket
 			cb()
 		}
 		socket.leave = function(channel, cb) {
@@ -92,8 +93,17 @@ describe('socketio-server', function () {
 		// Mock the socket
 		socket = createSocketMock("socket1")
 
+		// Mock metrics
+		metricsMock = {
+			counter: {},
+			increment: function(metric, streamId, count, canvasId) {
+				var key = metric + "/" + streamId + "/" + canvasId
+				this.counter[key] = (this.counter[key] || 0) + count
+			}
+		}
+
 		// Create the server instance
-		server = new SocketIoServer('invalid-zookeeper-addr', 0, kafkaMock, ioMock)
+		server = new SocketIoServer('invalid-zookeeper-addr', 0, kafkaMock, ioMock, metricsMock)
 	});
 
 	afterEach(function() {
@@ -116,6 +126,20 @@ describe('socketio-server', function () {
 		ioMock.emit('connection', socket)
 	});
 
+	it('should report emitted ui messages to "eventsOut" metric', function () {
+		assert(!metricsMock.counter["eventsOut/c"])
+		var socket1 = createSocketMock("metricsTestSocket1")
+		var socket2 = createSocketMock("metricsTestSocket2")
+		ioMock.emit('connection', socket1)
+		socket1.emit('subscribe', {channel: "c", canvas: "x"})
+		kafkaMock.emit('message', msg({foo: "bar"}, 0), "c")
+		assert.equal(metricsMock.counter["eventsOut/c/x"], 1)
+		ioMock.emit('connection', socket2)
+		socket2.emit('subscribe', {channel: "c", canvas: "x"})
+		kafkaMock.emit('message', msg({foo: "bar"}, 0), "c")
+		assert.equal(metricsMock.counter["eventsOut/c/x"], 3)
+	})
+
 	describe('resend', function() {
 
 		var expect
@@ -135,6 +159,7 @@ describe('socketio-server', function () {
 
 			// io.sockets.in(channel).emit('ui', data);
 			ioMock.sockets = {
+				adapter: { rooms: {} },
 				in: function(channel) {
 					return socket
 				}
@@ -203,6 +228,13 @@ describe('socketio-server', function () {
 				socket.emit('resend', {channel:"c", resend_all:true})
 			});
 
+			it('should report correct number to "resend" metric', function () {
+				assert(!metricsMock.counter["resend/c"])
+				ioMock.emit('connection', socket)
+				socket.emit('resend', {channel:"c", canvas:"x", resend_all:true})
+				assert.equal(metricsMock.counter["resend/c/x"], 10 - 5)
+			})
+
 			it('should reference the subscription id in resend state messages', function (done) {
 				kafkaMock.resend = function(channel, from, to, handler, callback) {
 					for (var i=from;i<=to;i++)
@@ -246,6 +278,13 @@ describe('socketio-server', function () {
 				ioMock.emit('connection', socket)
 				socket.emit('resend', {channel:"c", resend_from:7})
 			});
+
+			it('should report correct number to "resend" metric', function () {
+				assert(!metricsMock.counter["resend/c"])
+				ioMock.emit('connection', socket)
+				socket.emit('resend', {channel:"c", canvas:"x", resend_from:7})
+				assert.equal(metricsMock.counter["resend/c/x"], 10 - 7)
+			})
 
 			it('should not resend from below-range offset', function (done) {
 				kafkaMock.resend = function(channel, from, to, handler, callback) {
@@ -410,6 +449,13 @@ describe('socketio-server', function () {
 				ioMock.emit('connection', socket)
 				socket.emit('resend', {channel:"c", resend_last:2})
 			});
+
+			it('should report correct number to "resend" metric', function () {
+				assert(!metricsMock.counter["resend/c"])
+				ioMock.emit('connection', socket)
+				socket.emit('resend', {channel:"c", canvas:"x", resend_last:2})
+				assert.equal(metricsMock.counter["resend/c/x"], 2)
+			})
 
 			it('should not try to resend more than what is available', function (done) {
 				kafkaMock.resend = function(channel, from, to, handler, callback) {
