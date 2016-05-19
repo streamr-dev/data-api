@@ -96,8 +96,8 @@ describe('socketio-server', function () {
 		// Mock metrics
 		metricsMock = {
 			counter: {},
-			increment: function(metric, user, count) {
-				var key = metric + "/" + user
+			increment: function(metric, streamId, count, canvasId) {
+				var key = metric + "/" + streamId + "/" + canvasId
 				this.counter[key] = (this.counter[key] || 0) + count
 			}
 		}
@@ -131,13 +131,13 @@ describe('socketio-server', function () {
 		var socket1 = createSocketMock("metricsTestSocket1")
 		var socket2 = createSocketMock("metricsTestSocket2")
 		ioMock.emit('connection', socket1)
-		socket1.emit('subscribe', {channel: "c"})
-		kafkaMock.emit('message', msg({foo:"bar"},0), "c")
-		assert.equal(metricsMock.counter["eventsOut/c"], 1)
+		socket1.emit('subscribe', {channel: "c", canvas: "x"})
+		kafkaMock.emit('message', msg({foo: "bar"}, 0), "c")
+		assert.equal(metricsMock.counter["eventsOut/c/x"], 1)
 		ioMock.emit('connection', socket2)
-		socket2.emit('subscribe', {channel: "c"})
-		kafkaMock.emit('message', msg({foo:"bar"},0), "c")
-		assert.equal(metricsMock.counter["eventsOut/c"], 3)
+		socket2.emit('subscribe', {channel: "c", canvas: "x"})
+		kafkaMock.emit('message', msg({foo: "bar"}, 0), "c")
+		assert.equal(metricsMock.counter["eventsOut/c/x"], 3)
 	})
 
 	describe('resend', function() {
@@ -231,8 +231,8 @@ describe('socketio-server', function () {
 			it('should report correct number to "resend" metric', function () {
 				assert(!metricsMock.counter["resend/c"])
 				ioMock.emit('connection', socket)
-				socket.emit('resend', {channel:"c", resend_all:true})
-				assert.equal(metricsMock.counter["resend/c"], 10 - 5)
+				socket.emit('resend', {channel:"c", canvas:"x", resend_all:true})
+				assert.equal(metricsMock.counter["resend/c/x"], 10 - 5)
 			})
 
 			it('should reference the subscription id in resend state messages', function (done) {
@@ -282,8 +282,8 @@ describe('socketio-server', function () {
 			it('should report correct number to "resend" metric', function () {
 				assert(!metricsMock.counter["resend/c"])
 				ioMock.emit('connection', socket)
-				socket.emit('resend', {channel:"c", resend_from:7})
-				assert.equal(metricsMock.counter["resend/c"], 10 - 7)
+				socket.emit('resend', {channel:"c", canvas:"x", resend_from:7})
+				assert.equal(metricsMock.counter["resend/c/x"], 10 - 7)
 			})
 
 			it('should not resend from below-range offset', function (done) {
@@ -453,8 +453,8 @@ describe('socketio-server', function () {
 			it('should report correct number to "resend" metric', function () {
 				assert(!metricsMock.counter["resend/c"])
 				ioMock.emit('connection', socket)
-				socket.emit('resend', {channel:"c", resend_last:2})
-				assert.equal(metricsMock.counter["resend/c"], 2)
+				socket.emit('resend', {channel:"c", canvas:"x", resend_last:2})
+				assert.equal(metricsMock.counter["resend/c/x"], 2)
 			})
 
 			it('should not try to resend more than what is available', function (done) {

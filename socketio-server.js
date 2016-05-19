@@ -1,6 +1,6 @@
 var SocketIoServer = require('./lib/socketio-server').SocketIoServer
 
-var StreamrStreamCache = require('./lib/streamr-http-api/lib/streamCache')
+var StreamrStreamCache = require('./lib/streamr-http-api/lib/cache')
 var StreamrStreamMetrics = require('./lib/streamr-http-api/lib/streamMetrics')
 var StreamrMetrics = require('./lib/streamr-http-api/lib/metrics')
 var StreamrKafkaProducer = require('./lib/streamr-http-api/lib/kafka')
