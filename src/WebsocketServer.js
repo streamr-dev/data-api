@@ -175,7 +175,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         stream.stateTimeout = setTimeout(() => {
             if (stream.state !== 'subscribed') {
                 debug('Stream %s never got to subscribed state, cleaning..', streamId)
-                this.deleteStreamObject(streamId)
+                this.deleteStreamObject(streamId, streamPartition)
             }
         }, 60 * 1000)
 
@@ -248,7 +248,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                                 stream.emit('subscribed', err)
 
                                 // Delete the stream ref on subscribe error
-                                this.deleteStreamObject(stream.id)
+                                this.deleteStreamObject(stream.id, streamPartition)
 
                                 console.log(`Error subscribing to ${stream.id}: ${err}`)
                             } else {
