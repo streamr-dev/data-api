@@ -668,15 +668,24 @@ describe('WebsocketServer', () => {
     })
 
     describe('createStreamObject', () => {
+
+        let stream
+
+        afterEach(() => {
+            if (stream) {
+                clearTimeout(stream.stateTimeout);
+            }
+        })
+
         it('should return an object with the correct id, partition and state', () => {
-            const stream = server.createStreamObject('streamId', 3)
+            stream = server.createStreamObject('streamId', 3)
             assert.equal(stream.id, 'streamId')
             assert.equal(stream.partition, 3)
             assert.equal(stream.state, 'init')
         })
 
         it('should return an object that can be looked up', () => {
-            const stream = server.createStreamObject('streamId', 4)
+            stream = server.createStreamObject('streamId', 4)
             assert.equal(server.getStreamObject('streamId', 4), stream)
         })
     })
@@ -685,6 +694,12 @@ describe('WebsocketServer', () => {
         let stream
         beforeEach(() => {
             stream = server.createStreamObject('streamId', 0)
+        })
+
+        afterEach(() => {
+            if (stream) {
+                clearTimeout(stream.stateTimeout);
+            }
         })
 
         it('must return the requested stream', () => {
@@ -697,8 +712,16 @@ describe('WebsocketServer', () => {
     })
 
     describe('deleteStreamObject', () => {
+        let stream
+
         beforeEach(() => {
-            server.createStreamObject('streamId', 0)
+            stream = server.createStreamObject('streamId', 0)
+        })
+
+        afterEach(() => {
+            if (stream) {
+                clearTimeout(stream.stateTimeout);
+            }
         })
 
         it('must delete the requested stream', () => {
