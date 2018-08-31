@@ -1,13 +1,13 @@
 const events = require('events')
 const redis = require('redis')
-const debug = require('debug')('RedisUtil')
+const debug = require('debug')('RedisClient')
 const StreamrBinaryMessageWithKafkaMetadata = require('./protocol/StreamrBinaryMessageWithKafkaMetadata')
 
 function getRedisKey(streamId, streamPartition) {
     return `${streamId}-${streamPartition}`
 }
 
-module.exports = class RedisUtil extends events.EventEmitter {
+module.exports = class RedisClient extends events.EventEmitter {
     constructor(hosts, password, cb) {
         super()
 
