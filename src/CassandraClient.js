@@ -1,6 +1,6 @@
 const events = require('events')
 const cassandra = require('cassandra-driver')
-const debug = require('debug')('CassandraUtil')
+const debug = require('debug')('CassandraClient')
 const StreamrBinaryMessageWithKafkaMetadata = require('./protocol/StreamrBinaryMessageWithKafkaMetadata')
 
 const DEFAULT_OPTIONS = {
@@ -8,10 +8,10 @@ const DEFAULT_OPTIONS = {
     refetchInterval: 1000,
 }
 
-module.exports = class CassandraUtil extends events.EventEmitter {
+module.exports = class CassandraClient extends events.EventEmitter {
     constructor(contactPoints, keyspace, options) {
         super()
-        debug('Creating CassandraUtil: contactPoints: %o, keyspace: %s', contactPoints, keyspace)
+        debug('Creating CassandraClient: contactPoints: %o, keyspace: %s', contactPoints, keyspace)
         this.client = new cassandra.Client({
             contactPoints,
             keyspace,
