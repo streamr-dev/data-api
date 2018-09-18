@@ -1,34 +1,34 @@
 const events = require('events')
 const kafka = require('kafka-node')
-const debug = require('debug')('KafkaUtil')
+const debug = require('debug')('KafkaClient')
 const FailedToPublishError = require('./errors/FailedToPublishError')
 
-module.exports = class KafkaUtil extends events.EventEmitter {
-    constructor(dataTopic, partitioner, zookeeper, kafkaClient, kafkaProducer) {
+module.exports = class KafkaClient extends events.EventEmitter {
+    constructor(dataTopic, partitioner, zookeeper, kafkaDriver, kafkaProducer) {
         super()
         this.dataTopic = dataTopic
         this.partitioner = partitioner
-        this.kafkaClient = kafkaClient || new kafka.Client(zookeeper, `streamr-kafka-producer-${Date.now()}`)
+        this.kafkaDriver = kafkaDriver || new kafka.Client(zookeeper, `streamr-kafka-producer-${Date.now()}`)
 
-        this.kafkaClient.on('ready', () => {
+        this.kafkaDriver.on('ready', () => {
             debug('Kafka client is ready. Refreshing metadata for data topic: %s', this.dataTopic)
-            this.kafkaClient.refreshMetadata([dataTopic], (err) => {
+            this.kafkaDriver.refreshMetadata([dataTopic], (err) => {
                 if (err) {
                     throw new Error(`Error while getting metadata for data topic ${this.dataTopic}: ${err}`)
-                } else if (!this.kafkaClient.topicMetadata[this.dataTopic]) {
-                    throw new Error(`Falsey topic metadata for ${this.dataTopic}: ${this.kafkaClient.topicMetadata[this.dataTopic]}`)
+                } else if (!this.kafkaDriver.topicMetadata[this.dataTopic]) {
+                    throw new Error(`Falsey topic metadata for ${this.dataTopic}: ${this.kafkaDriver.topicMetadata[this.dataTopic]}`)
                 }
 
-                this.dataTopicPartitionCount = Object.keys(this.kafkaClient.topicMetadata[this.dataTopic]).length
-                debug('Got metadata for data topic: %o', this.kafkaClient.topicMetadata[this.dataTopic])
+                this.dataTopicPartitionCount = Object.keys(this.kafkaDriver.topicMetadata[this.dataTopic]).length
+                debug('Got metadata for data topic: %o', this.kafkaDriver.topicMetadata[this.dataTopic])
                 debug('Partition count is: %d', this.dataTopicPartitionCount)
                 this.emit('ready')
             })
         })
 
-        this.kafkaProducer = kafkaProducer || new kafka.HighLevelProducer(this.kafkaClient)
+        this.kafkaProducer = kafkaProducer || new kafka.HighLevelProducer(this.kafkaDriver)
 
-        this.kafkaClient.on('error', (err) => {
+        this.kafkaDriver.on('error', (err) => {
             throw err
         })
 
@@ -64,7 +64,7 @@ module.exports = class KafkaUtil extends events.EventEmitter {
     }
 
     close(cb) {
-        this.kafkaClient.close(cb)
+        this.kafkaDriver.close(cb)
     }
 
 }

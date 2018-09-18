@@ -66,7 +66,7 @@ describe('Publisher', () => {
                 assert(partitionerMock.partition.calledWith(stream.partitions, undefined))
             })
 
-            it('should call KafkaUtil.send with a StreamrBinaryMessage with correct values', (done) => {
+            it('should call KafkaClient.send with a StreamrBinaryMessage with correct values', (done) => {
                 const timestamp = Date.now()
                 const ttl = 1000
 
