@@ -6,7 +6,7 @@ let optimist = require('optimist')
 
 const StreamFetcher = require('./src/StreamFetcher')
 const WebsocketServer = require('./src/WebsocketServer')
-const RedisUtil = require('./src/RedisUtil')
+const RedisClient = require('./src/RedisClient')
 const RedisOffsetFetcher = require('./src/RedisOffsetFetcher')
 const CassandraClient = require('./src/CassandraClient')
 const StreamrKafkaProducer = require('./src/KafkaClient')
@@ -36,7 +36,7 @@ module.exports = (externalConfig) => {
 
     // Create some utils
     const streamFetcher = new StreamFetcher(config.streamr)
-    const redis = new RedisUtil(config.redis.split(','), config['redis-pwd'])
+    const redis = new RedisClient(config.redis.split(','), config['redis-pwd'])
     const cassandra = new CassandraClient(config.cassandra.split(','), config.keyspace)
     const redisOffsetFetcher = new RedisOffsetFetcher(config.redis.split(',')[0], config['redis-pwd'])
     const kafka = new StreamrKafkaProducer(config['data-topic'], Partitioner, config.zookeeper)

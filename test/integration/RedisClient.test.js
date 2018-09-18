@@ -1,16 +1,16 @@
 const assert = require('assert')
 const redis = require('redis')
 
-const RedisUtil = require('../../src/RedisUtil')
+const RedisClient = require('../../src/RedisClient')
 const StreamrBinaryMessage = require('../../src/protocol/StreamrBinaryMessage')
 const StreamrBinaryMessageWithKafkaMetadata = require('../../src/protocol/StreamrBinaryMessageWithKafkaMetadata')
 
-describe('RedisUtil', () => {
+describe('RedisClient', () => {
     const REDIS_HOST = '127.0.0.1'
     const REDIS_PASS = undefined
 
     let testRedisClient
-    let redisHelper
+    let redisClient
     let streamId
 
     function streamrMessage() {
@@ -24,33 +24,33 @@ describe('RedisUtil', () => {
     }
 
     beforeEach((done) => {
-        streamId = `RedisUtil.test.js-${Date.now()}`
+        streamId = `RedisClient.test.js-${Date.now()}`
 
         testRedisClient = redis.createClient({
             host: REDIS_HOST, password: REDIS_PASS,
         })
-        redisHelper = new RedisUtil([REDIS_HOST], REDIS_PASS, done)
+        redisClient = new RedisClient([REDIS_HOST], REDIS_PASS, done)
     })
 
     afterEach(() => {
-        redisHelper.quit()
+        redisClient.quit()
         testRedisClient.quit()
     })
 
     describe('after instantiating with a single host and password', () => {
         it('has no subscriptions entries', () => {
-            assert.deepEqual(redisHelper.subscriptions, {})
+            assert.deepEqual(redisClient.subscriptions, {})
         })
 
         it('has single clientsByHost entry', () => {
-            assert.deepEqual(Object.keys(redisHelper.clientsByHost), [REDIS_HOST])
+            assert.deepEqual(Object.keys(redisClient.clientsByHost), [REDIS_HOST])
         })
     })
 
     describe('subscribe', () => {
         it('creates subscription entry', (done) => {
-            redisHelper.subscribe(streamId, 1, () => {
-                assert.deepEqual(redisHelper.subscriptions, {
+            redisClient.subscribe(streamId, 1, () => {
+                assert.deepEqual(redisClient.subscriptions, {
                     [`${streamId}-1`]: true,
                 })
                 done()
@@ -60,11 +60,11 @@ describe('RedisUtil', () => {
 
     describe('unsubscribe', () => {
         it('removes subscription entry', (done) => {
-            redisHelper.subscribe(streamId, 1, () => {
-                assert.equal(Object.keys(redisHelper.subscriptions).length, 1)
+            redisClient.subscribe(streamId, 1, () => {
+                assert.equal(Object.keys(redisClient.subscriptions).length, 1)
 
-                redisHelper.unsubscribe(streamId, 1, () => {
-                    assert.deepEqual(redisHelper.subscriptions, {})
+                redisClient.unsubscribe(streamId, 1, () => {
+                    assert.deepEqual(redisClient.subscriptions, {})
                     done()
                 })
             })
@@ -73,13 +73,13 @@ describe('RedisUtil', () => {
 
     describe('after subscribing', () => {
         beforeEach((done) => {
-            redisHelper.subscribe(streamId, 1, done)
+            redisClient.subscribe(streamId, 1, done)
         })
 
         it('emits a "message" event when receiving data from Redis', (done) => {
             const m = streamrMessage()
 
-            redisHelper.on('message', (msg) => {
+            redisClient.on('message', (msg) => {
                 assert.deepEqual(msg, m.toArray())
                 done()
             })
@@ -88,7 +88,7 @@ describe('RedisUtil', () => {
         })
 
         it('does not emit a "message" event for a message sent to another Redis channel', (done) => {
-            redisHelper.on('message', (msg) => {
+            redisClient.on('message', (msg) => {
                 throw new Error(`Should not have received message: ${msg}`)
             })
 
@@ -100,13 +100,13 @@ describe('RedisUtil', () => {
 
     describe('after subscribing and unsubscribing', () => {
         beforeEach((done) => {
-            redisHelper.subscribe(streamId, 1, () => {
-                redisHelper.unsubscribe(streamId, 1, done)
+            redisClient.subscribe(streamId, 1, () => {
+                redisClient.unsubscribe(streamId, 1, done)
             })
         })
 
         it('does not emit a "message" event when receiving data from Redis', (done) => {
-            redisHelper.on('message', (msg) => {
+            redisClient.on('message', (msg) => {
                 throw new Error(`Should not have received message: ${msg}`)
             })
 
@@ -117,14 +117,14 @@ describe('RedisUtil', () => {
 
         describe('after (re)subscribing', () => {
             beforeEach((done) => {
-                redisHelper.subscribe(streamId, 1, done)
+                redisClient.subscribe(streamId, 1, done)
             })
 
             it('emits a "message" event when receiving data from Redis', (done) => {
                 const m = streamrMessage()
 
                 testRedisClient.publish(`${streamId}-1`, m.toBytes())
-                redisHelper.on('message', (msg) => {
+                redisClient.on('message', (msg) => {
                     assert.deepEqual(msg, m.toArray())
                     done()
                 })
