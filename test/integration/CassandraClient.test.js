@@ -1,5 +1,5 @@
 const assert = require('assert')
-const CassandraUtil = require('../../src/CassandraUtil')
+const CassandraClient = require('../../src/CassandraClient')
 const CassandraDataInserter = require('../unit/test-helpers/CassandraDataInserter')
 
 const CASSANDRA_HOST = '127.0.0.1'
@@ -7,7 +7,7 @@ const KEYSPACE = 'streamr_dev'
 const BULK_INSERT_WAIT_MS = 100
 
 // don't put arrow function here, mocha timeout can only be set this way
-describe('CassandraUtil', () => {
+describe('CassandraClient', () => {
     let allMessages
     let expectedMessages
     let cassandra
@@ -18,7 +18,7 @@ describe('CassandraUtil', () => {
 
     beforeEach(() => {
         // Unique stream for each test
-        streamId = `CassandraUtil.test.js-${Date.now()}`
+        streamId = `CassandraClient.test.js-${Date.now()}`
 
         allMessages = [
             [28, streamId, 0, 1490180460000, 10, 5, -1, 27, JSON.stringify({
@@ -89,7 +89,7 @@ describe('CassandraUtil', () => {
             messagesReceived.push(msg.toArray())
         }
 
-        cassandra = new CassandraUtil([CASSANDRA_HOST], KEYSPACE, {
+        cassandra = new CassandraClient([CASSANDRA_HOST], KEYSPACE, {
             maxRefetchRetries: 2,
             refetchInterval: 120,
         })
