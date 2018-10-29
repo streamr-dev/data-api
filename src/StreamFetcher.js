@@ -20,25 +20,37 @@ module.exports = class StreamFetcher {
         })
     }
 
+    static getAuthorizationHeader(authKey, sessionToken) {
+        const headers = {}
+        if (sessionToken) {
+            headers.Authorization = `Bearer ${sessionToken}`
+        } else if (authKey) {
+            headers.Authorization = `token ${authKey}`
+        }
+        console.log(`auth: ${headers.Authorization}`)
+        return headers
+    }
+
     /**
      * Returns a Promise that resolves with the stream json. Fails if there is no read permission.
      *
      * @param streamId
      * @param authKey
+     * @param sessionToken
      * @returns {Promise.<TResult>}
      * @private
      */
-    _fetch(streamId, authKey) {
-        const headers = {}
-        if (authKey) {
-            headers.Authorization = `token ${authKey}`
-        }
+    _fetch(streamId, authKey, sessionToken) {
+        const headers = StreamFetcher.getAuthorizationHeader(authKey, sessionToken)
 
         return fetch(`${this.streamResourceUrl}/${streamId}`, {
             headers,
         }).then((response) => {
             if (response.status !== 200) {
-                debug('fetch failed with status %d for streamId %s key %s: %o', response.status, streamId, authKey, response.text())
+                debug(
+                    'fetch failed with status %d for streamId %s key %s sessionToken %s : %o',
+                    response.status, streamId, authKey, sessionToken, response.text(),
+                )
                 this.fetch.delete(streamId, authKey) // clear cache result
                 throw new HttpError(response.status)
             } else {
@@ -53,15 +65,13 @@ module.exports = class StreamFetcher {
      *
      * @param streamId
      * @param authKey
+     * @param sessionToken
      * @param operation
      * @returns {Promise}
      * @private
      */
-    _checkPermission(streamId, authKey, operation = 'read') {
-        const headers = {}
-        if (authKey) {
-            headers.Authorization = `token ${authKey}`
-        }
+    _checkPermission(streamId, authKey, sessionToken, operation = 'read') {
+        const headers = StreamFetcher.getAuthorizationHeader(authKey, sessionToken)
 
         return fetch(`${this.streamResourceUrl}/${streamId}/permissions/me`, {
             headers,
@@ -69,8 +79,8 @@ module.exports = class StreamFetcher {
             if (response.status !== 200) {
                 return response.text().then((errorMsg) => {
                     debug(
-                        'checkPermission failed with status %d for streamId %s key %s operation %s: %s',
-                        response.status, streamId, authKey, operation, errorMsg,
+                        'checkPermission failed with status %d for streamId %s key %s sessionToken %s operation %s: %s',
+                        response.status, streamId, authKey, sessionToken, operation, errorMsg,
                     )
                     this.checkPermission.delete(streamId, authKey, operation) // clear cache result
                     throw new HttpError(response.status)
@@ -86,19 +96,19 @@ module.exports = class StreamFetcher {
 
                 // Permission was not found
                 debug(
-                    'checkPermission failed for streamId %s key %s operation %s. permissions were: %o',
-                    streamId, authKey, operation, permissions,
+                    'checkPermission failed for streamId %s key %s sessionToken %s operation %s. permissions were: %o',
+                    streamId, authKey, sessionToken, operation, permissions,
                 )
                 throw new HttpError(403)
             })
         })
     }
 
-    authenticate(streamId, authKey, operation = 'read') {
+    authenticate(streamId, authKey, sessionToken, operation = 'read') {
         if (operation === 'read') {
             // No need to explicitly check permissions, as fetch will fail if no read permission
-            return this.fetch(streamId, authKey)
+            return this.fetch(streamId, authKey, sessionToken)
         }
-        return this.checkPermission(streamId, authKey, operation).then(() => this.fetch(streamId, authKey))
+        return this.checkPermission(streamId, authKey, sessionToken, operation).then(() => this.fetch(streamId, authKey, sessionToken))
     }
 }
