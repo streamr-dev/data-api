@@ -307,7 +307,7 @@ describe('StreamFetcher', () => {
     describe('authenticate', () => {
         it('only fetches if read permission is required', (done) => {
             streamFetcher.checkPermission = sinon.stub()
-            streamFetcher.authenticate(streamId, 'key').then((json) => {
+            streamFetcher.authenticate(streamId, 'key', undefined, undefined).then((json) => {
                 assert.equal(numOfRequests, 1)
                 assert.deepEqual(json, streamJson)
                 assert(streamFetcher.checkPermission.notCalled)
@@ -322,7 +322,7 @@ describe('StreamFetcher', () => {
                 operation: 'write',
             })
 
-            streamFetcher.authenticate(streamId, 'key', 'write').then((json) => {
+            streamFetcher.authenticate(streamId, 'key', undefined, 'write').then((json) => {
                 assert.equal(numOfRequests, 2)
                 assert.deepEqual(json, streamJson)
                 done()

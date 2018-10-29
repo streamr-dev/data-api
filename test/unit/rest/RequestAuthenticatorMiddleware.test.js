@@ -37,7 +37,7 @@ describe('AuthenticationMiddleware', () => {
             sinon.assert.calledOnce(streamFetcherStub.authenticate)
             sinon.assert.calledWithExactly(
                 streamFetcherStub.authenticate,
-                'streamId', undefined, 'read',
+                'streamId', undefined, undefined, 'read',
             )
         })
     })
@@ -54,7 +54,7 @@ describe('AuthenticationMiddleware', () => {
         sinon.assert.calledOnce(response.send)
         sinon.assert.calledWithExactly(response.status, 400)
         sinon.assert.calledWithExactly(response.send, {
-            error: 'Authorization header malformed. Should be of form "token authKey".',
+            error: 'Authorization header malformed. Should be of form "[Bearer|token] authKey".',
         })
     })
 
@@ -75,7 +75,7 @@ describe('AuthenticationMiddleware', () => {
             sinon.assert.calledOnce(streamFetcherStub.authenticate)
             sinon.assert.calledWithExactly(
                 streamFetcherStub.authenticate,
-                'streamId', 'authKey', 'read',
+                'streamId', 'authKey', undefined, 'read',
             )
         })
 
@@ -89,7 +89,7 @@ describe('AuthenticationMiddleware', () => {
             sinon.assert.calledOnce(streamFetcherStub.authenticate)
             sinon.assert.calledWithExactly(
                 streamFetcherStub.authenticate,
-                'streamId', 'authKey', 'write',
+                'streamId', 'authKey', undefined, 'write',
             )
         })
 
