@@ -27,7 +27,6 @@ module.exports = class StreamFetcher {
         } else if (authKey) {
             headers.Authorization = `token ${authKey}`
         }
-        console.log(`auth: ${headers.Authorization}`)
         return headers
     }
 
@@ -51,7 +50,7 @@ module.exports = class StreamFetcher {
                     'fetch failed with status %d for streamId %s key %s sessionToken %s : %o',
                     response.status, streamId, authKey, sessionToken, response.text(),
                 )
-                this.fetch.delete(streamId, authKey) // clear cache result
+                this.fetch.delete(streamId, authKey, sessionToken) // clear cache result
                 throw new HttpError(response.status)
             } else {
                 return response.json()
@@ -82,7 +81,7 @@ module.exports = class StreamFetcher {
                         'checkPermission failed with status %d for streamId %s key %s sessionToken %s operation %s: %s',
                         response.status, streamId, authKey, sessionToken, operation, errorMsg,
                     )
-                    this.checkPermission.delete(streamId, authKey, operation) // clear cache result
+                    this.checkPermission.delete(streamId, authKey, sessionToken, operation) // clear cache result
                     throw new HttpError(response.status)
                 })
             }
