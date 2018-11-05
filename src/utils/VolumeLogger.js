@@ -16,12 +16,12 @@ module.exports = class VolumeLogger {
     }
 
     logInput(bytes) {
-        this.inCount++
+        this.inCount += 1
         this.inBytes += bytes
     }
 
     logOutput(bytes) {
-        this.outCount++
+        this.outCount += 1
         this.outBytes += bytes
     }
 

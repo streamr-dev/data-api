@@ -1,5 +1,6 @@
 const assert = require('assert')
 const redis = require('redis')
+const StreamrMessage = require('streamr-client-protocol')
 
 const RedisUtil = require('../../src/RedisUtil')
 const StreamrBinaryMessage = require('../../src/protocol/StreamrBinaryMessage')

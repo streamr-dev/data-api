@@ -36,6 +36,7 @@
     "optimist": "*",
     "promise": "^7.1.1",
     "redis": "^2.6.2",
+    "streamr-client-protocol": "^1.0.0",
     "uws": "^0.14.5"
   },
   "devDependencies": {

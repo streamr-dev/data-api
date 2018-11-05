@@ -66,5 +66,4 @@ module.exports = class KafkaUtil extends events.EventEmitter {
     close(cb) {
         this.kafkaClient.close(cb)
     }
-
 }

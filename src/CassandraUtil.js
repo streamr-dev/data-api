@@ -81,7 +81,7 @@ module.exports = class CassandraUtil extends events.EventEmitter {
                 if (largestOffset === null || offset > largestOffset) {
                     largestOffset = offset
                 }
-                msgHandler(msg)
+                msgHandler(msg.toStreamMessage())
 
                 row = this.read()
             }
