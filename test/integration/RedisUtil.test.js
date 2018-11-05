@@ -81,7 +81,7 @@ describe('RedisUtil', () => {
             const m = streamrMessage()
 
             redisHelper.on('message', (msg) => {
-                assert.deepEqual(msg, m.toArray())
+                assert.deepEqual(msg, m.toStreamMessage())
                 done()
             })
 
@@ -126,7 +126,7 @@ describe('RedisUtil', () => {
 
                 testRedisClient.publish(`${streamId}-1`, m.toBytes())
                 redisHelper.on('message', (msg) => {
-                    assert.deepEqual(msg, m.toArray())
+                    assert.deepEqual(msg, m.toStreamMessage())
                     done()
                 })
             })
