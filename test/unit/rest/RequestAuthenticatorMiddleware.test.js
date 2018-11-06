@@ -58,7 +58,7 @@ describe('AuthenticationMiddleware', () => {
         })
     })
 
-    describe('given well-formed authorization token', () => {
+    describe('given well-formed API key as authorization header', () => {
         beforeEach(() => {
             request.headers.authorization = 'tOkEn authKey'
             request.params = {
@@ -183,6 +183,42 @@ describe('AuthenticationMiddleware', () => {
                     done()
                 })
             })
+        })
+    })
+
+    describe('given well-formed session token as authorization header', () => {
+        beforeEach(() => {
+            request.headers.authorization = 'Bearer session-token'
+            request.params = {
+                id: 'streamId',
+            }
+        })
+
+        it('delegates streamId and session token to streamFetcher#authenticate', () => {
+            streamFetcherStub.authenticate = sinon.stub()
+            streamFetcherStub.authenticate.returns(Promise.resolve({}))
+
+            middlewareInstance(request, response, next)
+
+            sinon.assert.calledOnce(streamFetcherStub.authenticate)
+            sinon.assert.calledWithExactly(
+                streamFetcherStub.authenticate,
+                'streamId', undefined, 'session-token', 'read',
+            )
+        })
+
+        it('authenticates with an explicitly given permission', () => {
+            streamFetcherStub.authenticate = sinon.stub()
+            streamFetcherStub.authenticate.returns(Promise.resolve({}))
+
+            middlewareInstance = authenticationMiddleware(streamFetcherStub, 'write')
+            middlewareInstance(request, response, next)
+
+            sinon.assert.calledOnce(streamFetcherStub.authenticate)
+            sinon.assert.calledWithExactly(
+                streamFetcherStub.authenticate,
+                'streamId', undefined, 'session-token', 'write',
+            )
         })
     })
 })
