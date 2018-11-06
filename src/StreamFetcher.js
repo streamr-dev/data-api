@@ -1,6 +1,7 @@
 const fetch = require('node-fetch')
 const memoize = require('memoizee')
 const debug = require('debug')('StreamFetcher')
+const AuthorizationHeaderUtil = require('./utils/AuthorizationHeaderUtil')
 const HttpError = require('./errors/HttpError')
 
 const MAX_AGE = 15 * 60 * 1000 // 15 minutes
@@ -20,16 +21,6 @@ module.exports = class StreamFetcher {
         })
     }
 
-    static getAuthorizationHeader(authKey, sessionToken) {
-        const headers = {}
-        if (sessionToken) {
-            headers.Authorization = `Bearer ${sessionToken}`
-        } else if (authKey) {
-            headers.Authorization = `token ${authKey}`
-        }
-        return headers
-    }
-
     /**
      * Returns a Promise that resolves with the stream json. Fails if there is no read permission.
      *
@@ -40,7 +31,7 @@ module.exports = class StreamFetcher {
      * @private
      */
     _fetch(streamId, authKey, sessionToken) {
-        const headers = StreamFetcher.getAuthorizationHeader(authKey, sessionToken)
+        const headers = AuthorizationHeaderUtil.getAuthorizationHeader(authKey, sessionToken)
 
         return fetch(`${this.streamResourceUrl}/${streamId}`, {
             headers,
@@ -70,7 +61,7 @@ module.exports = class StreamFetcher {
      * @private
      */
     _checkPermission(streamId, authKey, sessionToken, operation = 'read') {
-        const headers = StreamFetcher.getAuthorizationHeader(authKey, sessionToken)
+        const headers = AuthorizationHeaderUtil.getAuthorizationHeader(authKey, sessionToken)
 
         return fetch(`${this.streamResourceUrl}/${streamId}/permissions/me`, {
             headers,
