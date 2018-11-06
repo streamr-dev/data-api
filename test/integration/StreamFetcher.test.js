@@ -52,7 +52,7 @@ describe('StreamFetcher', () => {
                     res.sendStatus(500)
                 } else if (req.params.id !== streamId) {
                     res.sendStatus(404)
-                } else if (req.get('Authorization') !== 'token key') {
+                } else if (req.get('Authorization') !== 'token key' && req.get('Authorization') !== 'Bearer session-token') {
                     res.sendStatus(403)
                 } else {
                     res.status(200).send(permissions)
@@ -64,7 +64,7 @@ describe('StreamFetcher', () => {
                     res.sendStatus(500)
                 } else if (req.params.id !== streamId) {
                     res.sendStatus(404)
-                } else if (req.get('Authorization') !== 'token key') {
+                } else if (req.get('Authorization') !== 'token key' && req.get('Authorization') !== 'Bearer session-token') {
                     res.sendStatus(403)
                 } else {
                     res.status(200).send(streamJson)
@@ -97,8 +97,19 @@ describe('StreamFetcher', () => {
     })
 
     describe('checkPermission', () => {
-        it('returns Promise', (done) => {
+        it('returns Promise when API key given', (done) => {
             const promise = streamFetcher.checkPermission(streamId, 'key', undefined, 'read')
+            promise.then((response) => {
+                assert.deepEqual(response, true)
+                done()
+            }).catch((err) => {
+                done(err)
+            })
+            assert(promise instanceof Promise)
+        })
+
+        it('returns Promise when session token given', (done) => {
+            const promise = streamFetcher.checkPermission(streamId, undefined, 'session-token', 'read')
             promise.then((response) => {
                 assert.deepEqual(response, true)
                 done()
@@ -124,6 +135,14 @@ describe('StreamFetcher', () => {
             })
         })
 
+        it('rejects with 403 if session token does not grant access to stream', (done) => {
+            streamFetcher.checkPermission(streamId, undefined, 'nonExistingSessionToken', 'read').catch((err) => {
+                assert(err instanceof HttpError)
+                assert.equal(err.code, 403)
+                done()
+            })
+        })
+
         it('rejects with 403 if key does not provides (desired level) privilege to stream', (done) => {
             streamFetcher.checkPermission(streamId, 'key', undefined, 'write').catch((err) => {
                 assert(err instanceof HttpError)
@@ -134,6 +153,15 @@ describe('StreamFetcher', () => {
 
         it('resolves with true if key provides privilege to stream', (done) => {
             streamFetcher.checkPermission(streamId, 'key', undefined, 'read').then((response) => {
+                assert.deepEqual(response, true)
+                done()
+            }).catch((err) => {
+                done(err)
+            })
+        })
+
+        it('resolves with true if session token provides privilege to stream', (done) => {
+            streamFetcher.checkPermission(streamId, undefined, 'session-token', 'read').then((response) => {
                 assert.deepEqual(response, true)
                 done()
             }).catch((err) => {
@@ -203,8 +231,18 @@ describe('StreamFetcher', () => {
     })
 
     describe('fetch', () => {
-        it('returns Promise', (done) => {
+        it('returns Promise when API key given', (done) => {
             const promise = streamFetcher.fetch(streamId, 'key')
+            promise.then(() => {
+                done()
+            }).catch((err) => {
+                done(err)
+            })
+            assert(promise instanceof Promise)
+        })
+
+        it('returns Promise when session token given', (done) => {
+            const promise = streamFetcher.fetch(streamId, undefined, 'session-token')
             promise.then(() => {
                 done()
             }).catch((err) => {
@@ -223,6 +261,14 @@ describe('StreamFetcher', () => {
 
         it('rejects with 403 if key does not grant access to stream', (done) => {
             streamFetcher.fetch(streamId, 'nonExistantKey').catch((err) => {
+                assert(err instanceof HttpError)
+                assert.equal(err.code, 403)
+                done()
+            })
+        })
+
+        it('rejects with 403 if session token does not grant access to stream', (done) => {
+            streamFetcher.fetch(streamId, 'nonExistingSessionToken').catch((err) => {
                 assert(err instanceof HttpError)
                 assert.equal(err.code, 403)
                 done()
@@ -305,7 +351,7 @@ describe('StreamFetcher', () => {
     })
 
     describe('authenticate', () => {
-        it('only fetches if read permission is required', (done) => {
+        it('only fetches if read permission is required when API key given', (done) => {
             streamFetcher.checkPermission = sinon.stub()
             streamFetcher.authenticate(streamId, 'key', undefined, undefined).then((json) => {
                 assert.equal(numOfRequests, 1)
@@ -315,7 +361,7 @@ describe('StreamFetcher', () => {
             })
         })
 
-        it('checks permission and fetches if write permission is required', (done) => {
+        it('checks permission and fetches if write permission is required when API key given', (done) => {
             permissions.push({
                 id: null,
                 user: 'tester1@streamr.com',
@@ -323,6 +369,30 @@ describe('StreamFetcher', () => {
             })
 
             streamFetcher.authenticate(streamId, 'key', undefined, 'write').then((json) => {
+                assert.equal(numOfRequests, 2)
+                assert.deepEqual(json, streamJson)
+                done()
+            })
+        })
+
+        it('only fetches if read permission is required when session token given', (done) => {
+            streamFetcher.checkPermission = sinon.stub()
+            streamFetcher.authenticate(streamId, undefined, 'session-token', undefined).then((json) => {
+                assert.equal(numOfRequests, 1)
+                assert.deepEqual(json, streamJson)
+                assert(streamFetcher.checkPermission.notCalled)
+                done()
+            })
+        })
+
+        it('checks permission and fetches if write permission is required when session token given', (done) => {
+            permissions.push({
+                id: null,
+                user: 'tester1@streamr.com',
+                operation: 'write',
+            })
+
+            streamFetcher.authenticate(streamId, undefined, 'session-token', 'write').then((json) => {
                 assert.equal(numOfRequests, 2)
                 assert.deepEqual(json, streamJson)
                 done()
