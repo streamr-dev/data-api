@@ -80,14 +80,14 @@ describe('Connection', () => {
     })
 
     describe('send()', () => {
-        it('sendBroadcast sends message to socket', () => {
+        it('sends a serialized message to the socket', () => {
             const msg = new Protocol.UnicastMessage(new Protocol.StreamMessage(
                 'streamId',
-                0,
+                0, // partition
                 Date.now(),
-                undefined,
-                1,
-                0,
+                undefined, // ttl
+                1, // offset
+                0, // previousOffset
                 Protocol.StreamMessage.CONTENT_TYPES.JSON,
                 {
                     foo: 'bar',

@@ -307,7 +307,6 @@ describe('WebsocketServer', () => {
         })
     })
 
-    // TODO: some async operation stays open?
     describe('message broadcasting', () => {
         beforeEach(() => {
             wsMock.emit('connection', mockSocket)
@@ -358,7 +357,6 @@ describe('WebsocketServer', () => {
             ))
         })
 
-        // TODO: some async operation keeps running
         it('creates the Stream object with default partition', (done) => {
             setTimeout(() => {
                 assert(server.getStreamObject('streamId', 0) != null)
@@ -482,57 +480,41 @@ describe('WebsocketServer', () => {
         it('removes stream object if there are no more sockets on the stream', () => {
             assert(server.getStreamObject('streamId', 0) == null)
         })
+    })
 
-        describe('when there are other sockets on the stream', () => {
-            // TODO: jatka tästä. making more dry with beforeEach
-            beforeEach((done) => {
-                setTimeout(() => {
-                    const socket2 = new MockSocket()
-                    wsMock.emit('connection', socket2)
-                    socket2.receive(new Protocol.SubscribeRequest(
-                        'streamId',
-                        0,
-                        'correct',
-                    ))
-                    done()
-                })
+    describe('subscribe-subscribe-unsubscribe', () => {
+        beforeEach((done) => {
+            realtimeAdapter.unsubscribe = sinon.mock()
+
+            // subscribe
+            mockSocket.receive(new Protocol.SubscribeRequest(
+                'streamId',
+                0,
+                'correct',
+            ))
+
+            // subscribe 2
+            const socket2 = new MockSocket()
+            wsMock.emit('connection', socket2)
+            socket2.receive(new Protocol.SubscribeRequest(
+                'streamId',
+                0,
+                'correct',
+            ))
+
+            // unsubscribe 1
+            setTimeout(() => {
+                mockSocket.receive(new Protocol.UnsubscribeRequest('streamId', 0))
+                done()
             })
+        })
 
-            it('does not unsubscribe from realtimeAdapter', (done) => {
-                realtimeAdapter.unsubscribe = sinon.spy()
+        it('does not unsubscribe from realtimeAdapter if there are other subscriptions to it', () => {
+            sinon.assert.notCalled(realtimeAdapter.unsubscribe)
+        })
 
-                setTimeout(() => {
-                    const socket2 = new MockSocket()
-                    wsMock.emit('connection', socket2)
-                    socket2.receive(new Protocol.SubscribeRequest(
-                        'streamId',
-                        0,
-                        'correct',
-                    ))
-
-                    setTimeout(() => {
-                        sinon.assert.notCalled(realtimeAdapter.unsubscribe)
-                        done()
-                    })
-                })
-            })
-
-            it('does not remove stream object if there are sockets remaining on the stream', (done) => {
-                setTimeout(() => {
-                    const socket2 = new MockSocket()
-                    wsMock.emit('connection', socket2)
-                    mockSocket.receive(new Protocol.SubscribeRequest(
-                        'streamId',
-                        0,
-                        'correct',
-                    ))
-
-                    setTimeout(() => {
-                        assert(server.getStreamObject('streamId', 0) != null)
-                        done()
-                    })
-                })
-            })
+        it('does not remove stream object if there are other subscriptions to it', () => {
+            assert(server.getStreamObject('streamId', 0) != null)
         })
     })
 
