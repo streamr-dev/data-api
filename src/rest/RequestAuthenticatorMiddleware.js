@@ -10,15 +10,15 @@ module.exports = function (streamFetcher, permission = 'read') {
 
         // Try to parse authorization header if defined
         if (req.headers.authorization !== undefined) {
-            const apiKeyHeaderMalformed = !req.headers.authorization.toLowerCase().startsWith('token ')
-            const sessionTokenHeaderMalformed = !req.headers.authorization.startsWith('Bearer ')
-            if (apiKeyHeaderMalformed && sessionTokenHeaderMalformed) {
+            const apiKeyHeaderValid = req.headers.authorization.toLowerCase().startsWith('token ')
+            const sessionTokenHeaderValid = req.headers.authorization.startsWith('Bearer ')
+            if (!(apiKeyHeaderValid || sessionTokenHeaderValid)) {
                 res.status(400).send({
                     error: 'Authorization header malformed. Should be of form "[Bearer|token] authKey".',
                 })
                 return
             }
-            if (!apiKeyHeaderMalformed) {
+            if (apiKeyHeaderValid) {
                 authKey = req.headers.authorization
                     .substring(6)
                     .trim()
