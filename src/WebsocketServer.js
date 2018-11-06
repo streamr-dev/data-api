@@ -123,7 +123,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         const streamId = req.stream
         const streamPartition = req.partition || DEFAULT_PARTITION
         const authkey = req.authKey
-        const sessiontoken = req.sessionToken
+        const { sessionToken } = req
 
         const requestRef = {
             stream: streamId, partition: streamPartition, sub: req.sub,
@@ -169,7 +169,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         }
 
         Promise.all([
-            this.streamFetcher.authenticate(streamId, authkey, sessiontoken),
+            this.streamFetcher.authenticate(streamId, authkey, sessionToken),
             this.latestOffsetFetcher.fetchOffset(streamId, streamPartition),
         ]).then((results) => {
             const latestKnownOffset = results[1]
