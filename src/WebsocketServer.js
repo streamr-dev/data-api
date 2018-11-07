@@ -71,7 +71,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
             return
         }
 
-        this.streamFetcher.authenticate(request.streamId, request.apiKey, 'write')
+        this.streamFetcher.authenticate(request.streamId, request.apiKey, request.sessionToken, 'write')
             .then((stream) => this.publisher.publish(
                 stream,
                 request.timestamp,
@@ -130,7 +130,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         }
 
         Promise.all([
-            this.streamFetcher.authenticate(request.streamId, request.apiKey),
+            this.streamFetcher.authenticate(request.streamId, request.apiKey, request.sessionToken),
             this.latestOffsetFetcher.fetchOffset(request.streamId, request.streamPartition),
         ]).then((results) => {
             const latestKnownOffset = results[1]
@@ -251,7 +251,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
     }
 
     handleSubscribeRequest(connection, request) {
-        this.streamFetcher.authenticate(request.streamId, request.apiKey)
+        this.streamFetcher.authenticate(request.streamId, request.apiKey, request.sessionToken)
             .then((/* streamJson */) => {
                 let stream = this.getStreamObject(request.streamId, request.streamPartition)
 
