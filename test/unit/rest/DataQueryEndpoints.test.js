@@ -142,7 +142,7 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                historicalAdapterStub.getLast = function (stream, streamPartition, count, msgHandler, doneCallback) {
+                historicalAdapterStub.getLast = (stream, streamPartition, count, msgHandler, doneCallback) => {
                     doneCallback(null, {
                         error: 'error ',
                     })
@@ -321,7 +321,7 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                historicalAdapterStub.getFromOffset = function (stream, partition, from, msgHandler, doneCallback) {
+                historicalAdapterStub.getFromOffset = (stream, partition, from, msgHandler, doneCallback) => {
                     doneCallback(null, {
                         error: 'error ',
                     })
@@ -373,7 +373,7 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                historicalAdapterStub.getOffsetRange = function (stream, partition, from, to, msgHandler, doneCb) {
+                historicalAdapterStub.getOffsetRange = (stream, partition, from, to, msgHandler, doneCb) => {
                     doneCb(null, {
                         error: 'error ',
                     })
@@ -431,7 +431,7 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                historicalAdapterStub.getFromTimestamp = function (stream, partition, from, msgHandler, doneCallback) {
+                historicalAdapterStub.getFromTimestamp = (stream, partition, from, msgHandler, doneCallback) => {
                     doneCallback(null, {
                         error: 'error ',
                     })
@@ -487,7 +487,7 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                historicalAdapterStub.getTimestampRange = function (stream, streamPartition, from, to, msgHandler, doneCallback) {
+                historicalAdapterStub.getTimestampRange = (stream, streamPartition, from, to, msgHandler, doneCallback) => {
                     doneCallback(null, {
                         error: 'error ',
                     })

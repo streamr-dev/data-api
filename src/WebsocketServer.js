@@ -174,7 +174,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                     doneHandler,
                 )
             } else {
-                debug('handleResendRequest: unknown resend request: %o', requestJson)
+                debug('handleResendRequest: unknown resend request: %o', JSON.stringify(request))
                 connection.send(new Protocol.ErrorResponse(`Unknown resend options: ${JSON.stringify(request.resendOptions)}`))
             }
         }).catch((err) => {
@@ -314,7 +314,10 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         const stream = this.getStreamObject(request.streamId, request.streamPartition)
 
         if (stream) {
-            debug('handleUnsubscribeRequest: socket %s unsubscribed from stream %s partition %d', connection.id, request.streamId, request.streamPartition)
+            debug(
+                'handleUnsubscribeRequest: socket %s unsubscribed from stream %s partition %d',
+                connection.id, request.streamId, request.streamPartition,
+            )
 
             stream.removeConnection(connection)
             connection.removeStream(request.streamId, request.streamPartition)
@@ -325,22 +328,21 @@ module.exports = class WebsocketServer extends events.EventEmitter {
              * Check whether anyone is subscribed to the stream anymore
              */
             if (stream.getConnections().length) {
-                debug('checkRoomEmpty: Clients remaining on %s partition %d: %d', request.streamId, request.streamPartition, stream.getConnections().length)
+                debug(
+                    'checkRoomEmpty: Clients remaining on %s partition %d: %d',
+                    request.streamId, request.streamPartition, stream.getConnections().length,
+                )
             } else {
                 debug(
                     'checkRoomEmpty: stream %s partition %d has no clients remaining, unsubscribing realtimeAdapter...',
-                    request.streamId,
-                    request.streamPartition,
+                    request.streamId, request.streamPartition,
                 )
                 this.realtimeAdapter.unsubscribe(request.streamId, request.streamPartition)
                 this.deleteStreamObject(request.streamId, request.streamPartition)
             }
 
             if (ack) {
-                connection.send(new Protocol.UnsubscribeResponse(
-                    request.streamId,
-                    request.streamPartition,
-                ))
+                connection.send(new Protocol.UnsubscribeResponse(request.streamId, request.streamPartition))
             }
         } else {
             connection.send(new Protocol.ErrorResponse(`Not subscribed to stream ${request.streamId} partition ${request.streamPartition}!`))

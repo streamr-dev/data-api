@@ -1,6 +1,5 @@
 const assert = require('assert')
 const redis = require('redis')
-const StreamrMessage = require('streamr-client-protocol')
 
 const RedisUtil = require('../../src/RedisUtil')
 const StreamrBinaryMessage = require('../../src/protocol/StreamrBinaryMessage')
@@ -14,7 +13,7 @@ describe('RedisUtil', () => {
     let redisHelper
     let streamId
 
-    function streamrMessage() {
+    function streamrBinaryMessage() {
         const msg = new StreamrBinaryMessage(
             streamId, 1, 1488214484821, 0,
             StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify({
@@ -78,7 +77,7 @@ describe('RedisUtil', () => {
         })
 
         it('emits a "message" event when receiving data from Redis', (done) => {
-            const m = streamrMessage()
+            const m = streamrBinaryMessage()
 
             redisHelper.on('message', (msg) => {
                 assert.deepEqual(msg, m.toStreamMessage())
@@ -93,7 +92,7 @@ describe('RedisUtil', () => {
                 throw new Error(`Should not have received message: ${msg}`)
             })
 
-            testRedisClient.publish(`${streamId}-2`, streamrMessage().toBytes(), () => {
+            testRedisClient.publish(`${streamId}-2`, streamrBinaryMessage().toBytes(), () => {
                 setTimeout(done, 500)
             })
         })
@@ -111,7 +110,7 @@ describe('RedisUtil', () => {
                 throw new Error(`Should not have received message: ${msg}`)
             })
 
-            testRedisClient.publish(`${streamId}-1`, streamrMessage().toBytes(), () => {
+            testRedisClient.publish(`${streamId}-1`, streamrBinaryMessage().toBytes(), () => {
                 setTimeout(done, 500)
             })
         })
@@ -122,7 +121,7 @@ describe('RedisUtil', () => {
             })
 
             it('emits a "message" event when receiving data from Redis', (done) => {
-                const m = streamrMessage()
+                const m = streamrBinaryMessage()
 
                 testRedisClient.publish(`${streamId}-1`, m.toBytes())
                 redisHelper.on('message', (msg) => {
