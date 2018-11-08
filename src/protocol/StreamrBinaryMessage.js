@@ -5,6 +5,9 @@ const BufferReader = require('buffer-reader')
 const VERSION = 28 // 0x1C
 const CONTENT_TYPE_JSON = 27 // 0x1B
 
+const SIGNATURE_TYPE_NONE = 0
+const SIGNATURE_TYPE_ETH = 1
+
 function ensureBuffer(content) {
     if (Buffer.isBuffer(content)) {
         return content
@@ -16,7 +19,7 @@ function ensureBuffer(content) {
 }
 
 class StreamrBinaryMessage {
-    constructor(streamId, streamPartition, timestamp, ttl, contentType, content) {
+    constructor(streamId, streamPartition, timestamp, ttl, contentType, content, signatureType, signature) {
         this.version = VERSION
         this.streamId = streamId
         this.streamPartition = streamPartition
@@ -24,6 +27,8 @@ class StreamrBinaryMessage {
         this.ttl = ttl
         this.contentType = contentType
         this.content = ensureBuffer(content)
+        this.signatureType = signatureType || SIGNATURE_TYPE_NONE
+        this.signature = signature || ''
     }
 
     toBytes() {
@@ -56,6 +61,10 @@ class StreamrBinaryMessage {
             .Int32BE(contentBuf.length)
         // 20 + streamIdLength: content (variable length)
             .string(contentBuf)
+        // 20 + streamIdLength + contentLength: signatureType (1)
+            .Int8(this.signatureType)
+        // 21 + streamIdLength + contentLength: signature (variable length)
+            .string(this.signature)
     }
 
     getContentBuffer() {
@@ -85,6 +94,7 @@ class StreamrBinaryMessage {
 }
 
 /* static */ StreamrBinaryMessage.CONTENT_TYPE_JSON = CONTENT_TYPE_JSON
+/* static */ StreamrBinaryMessage.SIGNATURE_TYPE_NONE = SIGNATURE_TYPE_NONE
 
 /* static */ StreamrBinaryMessage.fromBytes = (buf) => {
     const reader = buf instanceof BufferReader ? buf : new BufferReader(buf)
@@ -100,8 +110,18 @@ class StreamrBinaryMessage {
         const contentType = reader.nextInt8()
         const contentLength = reader.nextInt32BE()
         const content = reader.nextBuffer(contentLength)
+        let signatureType
+        let signature
+        try {
+            signatureType = reader.nextInt8()
+            if (signatureType === SIGNATURE_TYPE_ETH) {
+                signature = reader.nextString(132, 'UTF-8')
+            }
+        } catch (e) {
+            signatureType = SIGNATURE_TYPE_NONE
+        }
 
-        return new StreamrBinaryMessage(streamId, streamPartition, ts, ttl, contentType, content)
+        return new StreamrBinaryMessage(streamId, streamPartition, ts, ttl, contentType, content, signatureType, signature)
     }
     throw new Error(`Unknown version: ${version}`)
 }

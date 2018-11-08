@@ -12,6 +12,8 @@ describe('StreamrBinaryMessage', () => {
     }
     const timestamp = Date.now()
     const ttl = 100
+    const signatureType = 1
+    const signature = '0xcb1fa20f2f8e75f27d3f171d236c071f0de39e4b497c51b390306fc6e7e112bb415ecea1bd093320dd91fd91113748286711122548c52a15179822a014dc14931b'
 
     describe('version 28', () => {
         let bytes
@@ -20,7 +22,7 @@ describe('StreamrBinaryMessage', () => {
             version = 28
             bytes = new StreamrBinaryMessage(
                 streamId, streamPartition, timestamp, ttl,
-                StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'),
+                StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'), signatureType, signature,
             ).toBytes()
         })
 
@@ -35,6 +37,8 @@ describe('StreamrBinaryMessage', () => {
                 assert.equal(m.ttl, ttl)
                 assert.equal(m.contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
                 assert.deepEqual(m.getContentParsed(), msg)
+                assert.equal(m.signatureType, signatureType)
+                assert.equal(m.signature, signature)
             })
 
             describe('with sinon spys on JSON object', () => {
@@ -58,6 +62,8 @@ describe('StreamrBinaryMessage', () => {
                     assert.equal(m.ttl, ttl)
                     assert.equal(m.contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
                     assert(Buffer.isBuffer(m.content))
+                    assert.equal(m.signatureType, signatureType)
+                    assert.equal(m.signature, signature)
 
                     // Since the content was passed as a buffer, it should remain as is on toBytes()
                     m.toBytes()
@@ -71,14 +77,14 @@ describe('StreamrBinaryMessage', () => {
             it('must accept a buffer content', () => {
                 new StreamrBinaryMessage(
                     streamId, streamPartition, timestamp, ttl,
-                    StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'),
+                    StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'), signatureType, signature,
                 )
             })
 
             it('must accept a string content', () => {
                 new StreamrBinaryMessage(
                     streamId, streamPartition, timestamp, ttl,
-                    StreamrBinaryMessage.CONTENT_TYPE_JSON, 'I AM A STRING',
+                    StreamrBinaryMessage.CONTENT_TYPE_JSON, 'I AM A STRING', signatureType, signature,
                 )
             })
 

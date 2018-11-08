@@ -45,7 +45,7 @@ class StreamrBinaryMessageWithKafkaMetadata {
     toObject(contentAsBuffer = true) {
         // Ensure the StreamrBinaryMessage is parsed
         const m = this.getStreamrBinaryMessage(contentAsBuffer)
-        return {
+        const withoutSig = {
             version: m.version,
             streamId: m.streamId,
             partition: m.streamPartition,
@@ -56,6 +56,14 @@ class StreamrBinaryMessageWithKafkaMetadata {
             contentType: m.contentType,
             content: contentAsBuffer ? m.getContentBuffer()
                 .toString('utf8') : m.getContentParsed(),
+        }
+        if (m.signatureType === StreamrBinaryMessage.SIGNATURE_TYPE_NONE) {
+            return withoutSig
+        }
+        return {
+            ...withoutSig,
+            signatureType: m.signatureType,
+            signature: m.signature,
         }
     }
 

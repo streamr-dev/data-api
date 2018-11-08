@@ -16,7 +16,7 @@ module.exports = class Publisher {
         })
     }
 
-    async publish(stream, timestamp = Date.now(), ttl = 0, contentType, content, partitionKey) {
+    async publish(stream, timestamp = Date.now(), ttl = 0, contentType, content, partitionKey, signatureType, signature) {
         if (!content) {
             throw new InvalidMessageContentError(`Empty message content rejected for stream ${stream.id}`)
         }
@@ -35,6 +35,8 @@ module.exports = class Publisher {
             ttl || 0,
             contentType,
             content,
+            signatureType,
+            signature,
         )
 
         this.volumeLogger.logInput(streamrBinaryMessage.getContentBuffer().length)
