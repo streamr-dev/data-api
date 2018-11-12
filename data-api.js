@@ -1,7 +1,7 @@
 const http = require('http')
 const cors = require('cors')
 const express = require('express')
-const ws = require('uws')
+const ws = require('sc-uws')
 const Optimist = require('optimist')
 
 const StreamFetcher = require('./src/StreamFetcher')
