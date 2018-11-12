@@ -80,6 +80,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 request.content,
                 request.partitionKey,
                 request.signatureType,
+                request.publisherAddress,
                 request.signature,
             ))
             .catch((err) => {

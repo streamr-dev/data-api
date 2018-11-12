@@ -16,7 +16,7 @@ module.exports = class Publisher {
         })
     }
 
-    async publish(stream, timestamp = Date.now(), ttl = 0, contentType, content, partitionKey, signatureType, signature) {
+    async publish(stream, timestamp = Date.now(), ttl = 0, contentType, content, partitionKey, signatureType, address, signature) {
         if (!content) {
             throw new InvalidMessageContentError(`Empty message content rejected for stream ${stream.id}`)
         }
@@ -36,6 +36,7 @@ module.exports = class Publisher {
             contentType,
             content,
             signatureType,
+            address,
             signature,
         )
 

@@ -57,12 +57,13 @@ class StreamrBinaryMessageWithKafkaMetadata {
             content: contentAsBuffer ? m.getContentBuffer()
                 .toString('utf8') : m.getContentParsed(),
         }
-        if (m.signatureType === StreamrBinaryMessage.SIGNATURE_TYPE_NONE) {
+        if (m.version === 28) {
             return withoutSig
         }
         return {
             ...withoutSig,
             signatureType: m.signatureType,
+            address: m.address,
             signature: m.signature,
         }
     }

@@ -3,6 +3,7 @@ const BufferMaker = require('buffermaker')
 const BufferReader = require('buffer-reader')
 
 const VERSION = 28 // 0x1C
+const VERSION_SIGNED = 29 // 0x1D
 const CONTENT_TYPE_JSON = 27 // 0x1B
 
 const SIGNATURE_TYPE_NONE = 0
@@ -18,17 +19,47 @@ function ensureBuffer(content) {
     throw new Error(`Unable to convert content to a Buffer! Type is: ${typeof content}`)
 }
 
+function hexToBytes(hex) {
+    const hexToParse = hex.startsWith('0x') ? hex.substr(2) : hex
+    let bytes
+    let c
+    for (bytes = [], c = 0; c < hexToParse.length; c += 2) {
+        bytes.push(parseInt(hexToParse.substr(c, 2), 16))
+    }
+    return bytes
+}
+
+function bytesToHex(bytes) {
+    let hex
+    let i
+    for (hex = [], i = 0; i < bytes.length; i++) {
+        hex.push((bytes[i] >>> 4).toString(16))
+        hex.push((bytes[i] & 0xF).toString(16))
+    }
+    return `0x${hex.join('')}`
+}
+
+function bytesBuf(buf, byteArray) {
+    let newBuf = buf
+    let i
+    for (i = 0; i < byteArray.length; i++) {
+        newBuf = newBuf.UInt8(byteArray[i])
+    }
+    return newBuf
+}
+
 class StreamrBinaryMessage {
-    constructor(streamId, streamPartition, timestamp, ttl, contentType, content, signatureType, signature) {
-        this.version = VERSION
+    constructor(streamId, streamPartition, timestamp, ttl, contentType, content, signatureType, address, signature) {
+        this.version = signatureType ? VERSION_SIGNED : VERSION
         this.streamId = streamId
         this.streamPartition = streamPartition
         this.timestamp = (timestamp instanceof Date ? timestamp.getTime() : timestamp)
         this.ttl = ttl
         this.contentType = contentType
         this.content = ensureBuffer(content)
-        this.signatureType = signatureType || SIGNATURE_TYPE_NONE
-        this.signature = signature || ''
+        this.signatureType = signatureType
+        this.address = address
+        this.signature = signature
     }
 
     toBytes() {
@@ -42,7 +73,7 @@ class StreamrBinaryMessage {
         const streamIdBuf = new BufferMaker().string(this.streamId).make()
         const contentBuf = ensureBuffer(this.content)
 
-        return bufferMaker
+        let buf = bufferMaker
         // byte 0: version (1 byte)
             .Int8(this.version)
         // 1: timestamp (8)
@@ -61,10 +92,17 @@ class StreamrBinaryMessage {
             .Int32BE(contentBuf.length)
         // 20 + streamIdLength: content (variable length)
             .string(contentBuf)
-        // 20 + streamIdLength + contentLength: signatureType (1)
-            .Int8(this.signatureType)
-        // 21 + streamIdLength + contentLength: signature (variable length)
-            .string(this.signature)
+        if (this.version === VERSION_SIGNED) {
+            // 20 + streamIdLength + contentLength: signatureType (1)
+            buf = buf.Int8(this.signatureType)
+            if (this.signatureType === SIGNATURE_TYPE_ETH) {
+                // 21 + streamIdLength + contentLength: address (20)
+                buf = bytesBuf(buf, hexToBytes(this.address))
+                // 41 + streamIdLength + contentLength: signature (65)
+                buf = bytesBuf(buf, hexToBytes(this.signature))
+            }
+        }
+        return buf
     }
 
     getContentBuffer() {
@@ -100,8 +138,8 @@ class StreamrBinaryMessage {
     const reader = buf instanceof BufferReader ? buf : new BufferReader(buf)
     const version = reader.nextInt8()
 
-    if (version === 28) {
-        this.version = 28
+    if (version === VERSION || version === VERSION_SIGNED) {
+        this.version = version
         const ts = new Int64(reader.nextBuffer(8)).valueOf()
         const ttl = reader.nextInt32BE()
         const streamIdLength = reader.nextUInt8()
@@ -111,17 +149,18 @@ class StreamrBinaryMessage {
         const contentLength = reader.nextInt32BE()
         const content = reader.nextBuffer(contentLength)
         let signatureType
+        let address
         let signature
-        try {
+        if (version === VERSION_SIGNED) {
             signatureType = reader.nextInt8()
             if (signatureType === SIGNATURE_TYPE_ETH) {
-                signature = reader.nextString(132, 'UTF-8')
+                address = bytesToHex(reader.nextBuffer(20)) // an Ethereum address is 20 bytes.
+                signature = bytesToHex(reader.nextBuffer(65)) // an Ethereum signature is 65 bytes.
+            } else if (signatureType !== SIGNATURE_TYPE_NONE) {
+                throw new Error(`Unknown signature type: ${signatureType}`)
             }
-        } catch (e) {
-            signatureType = SIGNATURE_TYPE_NONE
         }
-
-        return new StreamrBinaryMessage(streamId, streamPartition, ts, ttl, contentType, content, signatureType, signature)
+        return new StreamrBinaryMessage(streamId, streamPartition, ts, ttl, contentType, content, signatureType, address, signature)
     }
     throw new Error(`Unknown version: ${version}`)
 }
