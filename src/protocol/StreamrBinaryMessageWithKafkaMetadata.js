@@ -80,6 +80,9 @@ class StreamrBinaryMessageWithKafkaMetadata {
             this.previousOffset,
             streamrBinaryMessage.contentType,
             streamrBinaryMessage.getContentAsString(),
+            streamrBinaryMessage.signatureType,
+            streamrBinaryMessage.address,
+            streamrBinaryMessage.signature,
         )
     }
 }

@@ -133,6 +133,7 @@ class StreamrBinaryMessage {
 
 /* static */ StreamrBinaryMessage.CONTENT_TYPE_JSON = CONTENT_TYPE_JSON
 /* static */ StreamrBinaryMessage.SIGNATURE_TYPE_NONE = SIGNATURE_TYPE_NONE
+/* static */ StreamrBinaryMessage.SIGNATURE_TYPE_ETH = SIGNATURE_TYPE_ETH
 
 /* static */ StreamrBinaryMessage.fromBytes = (buf) => {
     const reader = buf instanceof BufferReader ? buf : new BufferReader(buf)

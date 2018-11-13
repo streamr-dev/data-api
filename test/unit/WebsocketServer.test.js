@@ -35,6 +35,22 @@ describe('WebsocketServer', () => {
         },
     )
 
+    const streamMessage2 = new Protocol.StreamMessage(
+        'streamId',
+        0, // partition
+        new Date(1491037200000),
+        0, // ttl
+        2, // offset
+        1,
+        Protocol.StreamMessage.CONTENT_TYPES.JSON,
+        {
+            hello: 'world',
+        },
+        StreamrBinaryMessage.SIGNATURE_TYPE_ETH,
+        '0xf915ed664e43c50eb7b9ca7cfeb992703ede55c4',
+        '0xcb1fa20f2f8e75f27d3f171d236c071f0de39e4b497c51b390306fc6e7e112bb415ecea1bd093320dd91fd91113748286711122548c52a15179822a014dc14931b',
+    )
+
     beforeEach(() => {
         realtimeAdapter = new events.EventEmitter()
         realtimeAdapter.subscribe = sinon.stub()
@@ -153,9 +169,51 @@ describe('WebsocketServer', () => {
             })
         })
 
+        it('adds the subscription id to signed messages', (done) => {
+            historicalAdapter.getAll = sinon.stub()
+            historicalAdapter.getAll.callsArgWithAsync(2, streamMessage2)
+
+            const request = new Protocol.ResendRequest('streamId', 0, 'sub', {
+                resend_all: true,
+            }, 'correct')
+            const expectedResponse = new Protocol.UnicastMessage(
+                streamMessage,
+                request.subId,
+            )
+
+            mockSocket.receive(request)
+
+            setTimeout(() => {
+                assert.deepEqual(mockSocket.sentMessages[1], expectedResponse.serialize())
+                done()
+            })
+        })
+
         it('emits a resent event when resend is complete', (done) => {
             historicalAdapter.getAll = (streamId, streamPartition, messageHandler, onDone) => {
                 messageHandler(streamMessage)
+                onDone()
+            }
+
+            const request = new Protocol.ResendRequest('streamId', 0, 'sub', {
+                resend_all: true,
+            }, 'correct')
+            const expectedResponse = new Protocol.ResendResponseResent(
+                request.streamId,
+                request.streamPartition,
+                request.subId,
+            )
+            mockSocket.receive(request)
+
+            setTimeout(() => {
+                assert.deepEqual(mockSocket.sentMessages[2], expectedResponse.serialize())
+                done()
+            })
+        })
+
+        it('emits a resent event when resend is complete (signed message)', (done) => {
+            historicalAdapter.getAll = (streamId, streamPartition, messageHandler, onDone) => {
+                messageHandler(streamMessage2)
                 onDone()
             }
 
@@ -323,6 +381,19 @@ describe('WebsocketServer', () => {
 
             setTimeout(() => {
                 assert.deepEqual(mockSocket.sentMessages[1], new Protocol.BroadcastMessage(streamMessage).serialize())
+                done()
+            })
+        })
+
+        it('emits signed messages received from Redis to those sockets according to streamId', (done) => {
+            mockSocket.receive(new Protocol.SubscribeRequest('streamId', 0, 'correct'))
+
+            setTimeout(() => {
+                realtimeAdapter.emit('message', streamMessage2)
+            })
+
+            setTimeout(() => {
+                assert.deepEqual(mockSocket.sentMessages[1], new Protocol.BroadcastMessage(streamMessage2).serialize())
                 done()
             })
         })

@@ -42,7 +42,7 @@ describe('CassandraUtil', () => {
         })
 
         cassandraDataInserter = new CassandraDataInserter(cassandra.client, streamId)
-        return cassandraDataInserter.bulkInsert(20).then(() => {
+        return cassandraDataInserter.bulkInsert(10, 10).then(() => {
             allMessages = insertedMessagesToStreamMessages()
             expectedMessages = allMessages
         })
