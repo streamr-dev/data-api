@@ -31,22 +31,6 @@ describe('DataQueryEndpoints', () => {
         )
     }
 
-    function streamMessageSigned(content) {
-        return new Protocol.StreamMessage(
-            'streamId',
-            0, // partition
-            new Date(2017, 3, 1, 12, 0, 0).getTime(),
-            0, // ttl
-            2, // offset
-            1, // previousOffset
-            Protocol.StreamMessage.CONTENT_TYPES.JSON,
-            content,
-            1,
-            '0xf915ed664e43c50eb7b9ca7cfeb992703ede55c4',
-            '0xcb1fa20f2f8e75f27d3f171d236c071f0de39e4b497c51b390306fc6e7e112bb415ecea1bd093320dd91fd91113748286711122548c52a15179822a014dc14931b',
-        )
-    }
-
     beforeEach(() => {
         app = express()
         historicalAdapterStub = {}
@@ -183,86 +167,6 @@ describe('DataQueryEndpoints', () => {
                         done()
                     })
                     .catch(done)
-            })
-        })
-    })
-
-    describe('Getting last events (signed messages)', () => {
-        const signedMessages = [
-            streamMessageSigned({
-                hello: 1,
-            }),
-            streamMessageSigned({
-                world: 2,
-            }),
-        ]
-
-        beforeEach(() => {
-            historicalAdapterStub.getLast = (stream, streamPartition, count, msgHandler, doneCallback) => {
-                signedMessages.forEach((msg) => msgHandler(msg))
-                doneCallback(null, null)
-            }
-        })
-
-        describe('GET /api/v1/streams/streamId/data/partitions/0/last', () => {
-            it('responds 200 and Content-Type JSON', (done) => {
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                    .expect('Content-Type', /json/)
-                    .expect(200, done)
-            })
-
-            it('responds with arrays as body', (done) => {
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                    .expect(signedMessages.map((msg) => msg.toObject()), done)
-            })
-
-            it('reports to volumeLogger', (done) => {
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                    .expect(200, () => {
-                        sinon.assert.calledWith(volumeLogger.logOutput, 22)
-                        done()
-                    })
-            })
-
-            it('responds with objects as body given ?wrapper=object', (done) => {
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last?wrapper=obJECt')
-                    .expect(signedMessages.map((msg) => msg.toObject(undefined, /* parseContent */ false, /* compact */ false)), done)
-            })
-
-            it('responds with arrays as body and parsed content given ?content=json', (done) => {
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last?content=json')
-                    .expect(signedMessages.map((msg) => msg.toObject(undefined, /* parseContent */ true, /* compact */ true)), done)
-            })
-
-            it('responds with objects as body and parsed content given ?wrapper=object&content=json', (done) => {
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last?wrapper=object&content=json')
-                    .expect(signedMessages.map((msg) => msg.toObject(undefined, /* parseContent */ true, /* compact */ false)), done)
-            })
-
-            it('invokes historicalAdapter#getLast once with correct arguments', (done) => {
-                sinon.spy(historicalAdapterStub, 'getLast')
-
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                    .then(() => {
-                        sinon.assert.calledOnce(historicalAdapterStub.getLast)
-                        sinon.assert.calledWith(historicalAdapterStub.getLast, 'streamId', 0, 1)
-                        done()
-                    })
-                    .catch(done)
-            })
-
-            it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                historicalAdapterStub.getLast = (stream, streamPartition, count, msgHandler, doneCallback) => {
-                    doneCallback(null, {
-                        error: 'error ',
-                    })
-                }
-
-                testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                    .expect('Content-Type', /json/)
-                    .expect(500, {
-                        error: 'Failed to fetch data!',
-                    }, done)
             })
         })
     })

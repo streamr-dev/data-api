@@ -35,22 +35,6 @@ describe('WebsocketServer', () => {
         },
     )
 
-    const streamMessage2 = new Protocol.StreamMessage(
-        'streamId',
-        0, // partition
-        new Date(1491037200000),
-        0, // ttl
-        2, // offset
-        1,
-        Protocol.StreamMessage.CONTENT_TYPES.JSON,
-        {
-            hello: 'world',
-        },
-        StreamrBinaryMessage.SIGNATURE_TYPE_ETH,
-        '0xf915ed664e43c50eb7b9ca7cfeb992703ede55c4',
-        '0xcb1fa20f2f8e75f27d3f171d236c071f0de39e4b497c51b390306fc6e7e112bb415ecea1bd093320dd91fd91113748286711122548c52a15179822a014dc14931b',
-    )
-
     beforeEach(() => {
         realtimeAdapter = new events.EventEmitter()
         realtimeAdapter.subscribe = sinon.stub()
@@ -169,51 +153,9 @@ describe('WebsocketServer', () => {
             })
         })
 
-        it('adds the subscription id to signed messages', (done) => {
-            historicalAdapter.getAll = sinon.stub()
-            historicalAdapter.getAll.callsArgWithAsync(2, streamMessage2)
-
-            const request = new Protocol.ResendRequest('streamId', 0, 'sub', {
-                resend_all: true,
-            }, 'correct')
-            const expectedResponse = new Protocol.UnicastMessage(
-                streamMessage,
-                request.subId,
-            )
-
-            mockSocket.receive(request)
-
-            setTimeout(() => {
-                assert.deepEqual(mockSocket.sentMessages[1], expectedResponse.serialize())
-                done()
-            })
-        })
-
         it('emits a resent event when resend is complete', (done) => {
             historicalAdapter.getAll = (streamId, streamPartition, messageHandler, onDone) => {
                 messageHandler(streamMessage)
-                onDone()
-            }
-
-            const request = new Protocol.ResendRequest('streamId', 0, 'sub', {
-                resend_all: true,
-            }, 'correct')
-            const expectedResponse = new Protocol.ResendResponseResent(
-                request.streamId,
-                request.streamPartition,
-                request.subId,
-            )
-            mockSocket.receive(request)
-
-            setTimeout(() => {
-                assert.deepEqual(mockSocket.sentMessages[2], expectedResponse.serialize())
-                done()
-            })
-        })
-
-        it('emits a resent event when resend is complete (signed message)', (done) => {
-            historicalAdapter.getAll = (streamId, streamPartition, messageHandler, onDone) => {
-                messageHandler(streamMessage2)
                 onDone()
             }
 
@@ -381,19 +323,6 @@ describe('WebsocketServer', () => {
 
             setTimeout(() => {
                 assert.deepEqual(mockSocket.sentMessages[1], new Protocol.BroadcastMessage(streamMessage).serialize())
-                done()
-            })
-        })
-
-        it('emits signed messages received from Redis to those sockets according to streamId', (done) => {
-            mockSocket.receive(new Protocol.SubscribeRequest('streamId', 0, 'correct'))
-
-            setTimeout(() => {
-                realtimeAdapter.emit('message', streamMessage2)
-            })
-
-            setTimeout(() => {
-                assert.deepEqual(mockSocket.sentMessages[1], new Protocol.BroadcastMessage(streamMessage2).serialize())
                 done()
             })
         })
@@ -625,229 +554,248 @@ describe('WebsocketServer', () => {
                 assert(server.getStreamObject('streamId', 0) != null)
             })
         })
+    })
 
-        describe('subscribe-unsubscribe-subscribe', () => {
-            it('should work', (done) => {
-                // connect
-                wsMock.emit('connection', mockSocket)
+    describe('subscribe-unsubscribe-subscribe', () => {
+        it('should work', (done) => {
+            // connect
+            wsMock.emit('connection', mockSocket)
 
-                // subscribe
-                mockSocket.receive(new Protocol.SubscribeRequest(
+            // subscribe
+            mockSocket.receive(new Protocol.SubscribeRequest(
+                'streamId',
+                0,
+                'correct',
+            ))
+
+            setTimeout(() => {
+                // unsubscribe
+                mockSocket.receive(new Protocol.UnsubscribeRequest(
                     'streamId',
                     0,
-                    'correct',
                 ))
 
                 setTimeout(() => {
-                    // unsubscribe
-                    mockSocket.receive(new Protocol.UnsubscribeRequest(
+                    // subscribed
+                    mockSocket.receive(new Protocol.SubscribeRequest(
                         'streamId',
                         0,
+                        'correct',
                     ))
 
                     setTimeout(() => {
-                        // subscribed
-                        mockSocket.receive(new Protocol.SubscribeRequest(
-                            'streamId',
-                            0,
-                            'correct',
-                        ))
-
-                        setTimeout(() => {
-                            assert.deepEqual(mockSocket.sentMessages, [
-                                new Protocol.SubscribeResponse('streamId', 0).serialize(),
-                                new Protocol.UnsubscribeResponse('streamId', 0).serialize(),
-                                new Protocol.SubscribeResponse('streamId', 0).serialize(),
-                            ])
-                            done()
-                        })
+                        assert.deepEqual(mockSocket.sentMessages, [
+                            new Protocol.SubscribeResponse('streamId', 0).serialize(),
+                            new Protocol.UnsubscribeResponse('streamId', 0).serialize(),
+                            new Protocol.SubscribeResponse('streamId', 0).serialize(),
+                        ])
+                        done()
                     })
                 })
             })
         })
+    })
 
-        describe('publish', () => {
+    describe('publish', () => {
+        beforeEach(() => {
+            // We are in connected state
+            wsMock.emit('connection', mockSocket)
+        })
+
+        it('calls the publisher for valid requests', (done) => {
+            const req = new Protocol.PublishRequest(myStream.streamId, 'correct', undefined, '{}')
+
+            publisher.publish = (stream, timestamp, ttl, contentType, content, partitionKey) => {
+                assert.deepEqual(stream, myStream)
+                assert.equal(timestamp, undefined)
+                assert.equal(ttl, undefined)
+                assert.equal(contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
+                assert.equal(content, req.content)
+                assert.equal(partitionKey, undefined)
+                done()
+            }
+
+            mockSocket.receive(req)
+        })
+
+        it('reads optional fields if specified', (done) => {
+            const req = new Protocol.PublishRequest(myStream.streamId, 'correct', undefined, '{}', Date.now(), 'foo')
+
+            publisher.publish = (stream, timestamp, ttl, contentType, content, partitionKey) => {
+                assert.deepEqual(stream, myStream)
+                assert.equal(timestamp, req.timestamp)
+                assert.equal(ttl, undefined)
+                assert.equal(contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
+                assert.equal(content, req.content)
+                assert.equal(partitionKey, req.partitionKey)
+                done()
+            }
+
+            mockSocket.receive(req)
+        })
+
+        it('reads signature fields if specified', (done) => {
+            const req = new Protocol.PublishRequest(myStream.streamId, 'correct', undefined, '{}', undefined, undefined, 'address', 1, 'signature')
+
+            publisher.publish = (stream, timestamp, ttl, contentType, content, partitionKey, signatureType, publisherAddress, signature) => {
+                assert.deepEqual(stream, myStream)
+                assert.equal(timestamp, req.timestamp)
+                assert.equal(ttl, undefined)
+                assert.equal(contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
+                assert.equal(content, req.content)
+                assert.equal(partitionKey, undefined)
+                assert.equal(publisherAddress, req.publisherAddress)
+                assert.equal(signatureType, req.signatureType)
+                assert.equal(signature, req.signature)
+                done()
+            }
+            const mockSocket3 = new MockSocket(29)
+            wsMock.emit('connection', mockSocket3)
+            mockSocket3.receive(req)
+        })
+
+        describe('error handling', () => {
             beforeEach(() => {
-                // We are in connected state
-                wsMock.emit('connection', mockSocket)
+                // None of these tests may publish
+                publisher.publish = sinon.stub().throws()
+
+                // Expect error messages
+                mockSocket.throwOnError = false
             })
 
-            it('calls the publisher for valid requests', (done) => {
-                const req = new Protocol.PublishRequest(myStream.streamId, 'correct', undefined, '{}')
+            afterEach(() => {
+                assert.equal(mockSocket.sentMessages.length, 1)
+                assert(Protocol.WebsocketResponse.deserialize(mockSocket.sentMessages[0]) instanceof Protocol.ErrorResponse)
+            })
 
-                publisher.publish = (stream, timestamp, ttl, contentType, content, partitionKey) => {
-                    assert.deepEqual(stream, myStream)
-                    assert.equal(timestamp, undefined)
-                    assert.equal(ttl, undefined)
-                    assert.equal(contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
-                    assert.equal(content, req.content)
-                    assert.equal(partitionKey, undefined)
-                    done()
+            it('responds with an error if the stream id is missing', () => {
+                const req = {
+                    type: 'publish',
+                    authKey: 'correct',
+                    msg: '{}',
                 }
 
-                mockSocket.receive(req)
+                mockSocket.receiveRaw(req)
             })
 
-            it('reads optional fields if specified', (done) => {
-                const req = new Protocol.PublishRequest(myStream.streamId, 'correct', undefined, '{}', Date.now(), 'foo')
-
-                publisher.publish = (stream, timestamp, ttl, contentType, content, partitionKey) => {
-                    assert.deepEqual(stream, myStream)
-                    assert.equal(timestamp, req.timestamp)
-                    assert.equal(ttl, undefined)
-                    assert.equal(contentType, StreamrBinaryMessage.CONTENT_TYPE_JSON)
-                    assert.equal(content, req.content)
-                    assert.equal(partitionKey, req.partitionKey)
-                    done()
+            it('responds with an error if the msg is missing', () => {
+                const req = {
+                    type: 'publish',
+                    stream: 'streamId',
+                    authKey: 'correct',
                 }
 
-                mockSocket.receive(req)
+                mockSocket.receiveRaw(req)
             })
 
-            describe('error handling', () => {
-                beforeEach(() => {
-                    // None of these tests may publish
-                    publisher.publish = sinon.stub()
-                        .throws()
+            it('responds with an error if the msg is not a string', () => {
+                const req = {
+                    type: 'publish',
+                    stream: 'streamId',
+                    authKey: 'correct',
+                    msg: {},
+                }
 
-                    // Expect error messages
-                    mockSocket.throwOnError = false
-                })
+                mockSocket.receiveRaw(req)
+            })
 
-                afterEach(() => {
-                    assert.equal(mockSocket.sentMessages.length, 1)
-                    assert(Protocol.WebsocketResponse.deserialize(mockSocket.sentMessages[0]) instanceof Protocol.ErrorResponse)
-                })
+            it('responds with an error if the api key is wrong', () => {
+                const req = {
+                    type: 'publish',
+                    stream: 'streamId',
+                    authKey: 'wrong',
+                    msg: '{}',
+                }
 
-                it('responds with an error if the stream id is missing', () => {
-                    const req = {
-                        type: 'publish',
-                        authKey: 'correct',
-                        msg: '{}',
-                    }
+                mockSocket.receiveRaw(req)
+            })
 
-                    mockSocket.receiveRaw(req)
-                })
+            it('responds with an error if the user does not have permission', () => {
+                const req = {
+                    type: 'publish',
+                    stream: 'streamId',
+                    authKey: 'correctButNoPermission',
+                    msg: '{}',
+                }
 
-                it('responds with an error if the msg is missing', () => {
-                    const req = {
-                        type: 'publish',
-                        stream: 'streamId',
-                        authKey: 'correct',
-                    }
+                mockSocket.receiveRaw(req)
+            })
+        })
+    })
 
-                    mockSocket.receiveRaw(req)
-                })
+    describe('disconnect', () => {
+        beforeEach((done) => {
+            wsMock.emit('connection', mockSocket)
+            mockSocket.receive(new Protocol.SubscribeRequest(
+                'streamId',
+                6,
+                'correct',
+            ))
+            mockSocket.receive(new Protocol.SubscribeRequest(
+                'streamId',
+                4,
+                'correct',
+            ))
+            mockSocket.receive(new Protocol.SubscribeRequest(
+                'streamId2',
+                0,
+                'correct',
+            ))
 
-                it('responds with an error if the msg is not a string', () => {
-                    const req = {
-                        type: 'publish',
-                        stream: 'streamId',
-                        authKey: 'correct',
-                        msg: {},
-                    }
-
-                    mockSocket.receiveRaw(req)
-                })
-
-                it('responds with an error if the api key is wrong', () => {
-                    const req = {
-                        type: 'publish',
-                        stream: 'streamId',
-                        authKey: 'wrong',
-                        msg: '{}',
-                    }
-
-                    mockSocket.receiveRaw(req)
-                })
-
-                it('responds with an error if the user does not have permission', () => {
-                    const req = {
-                        type: 'publish',
-                        stream: 'streamId',
-                        authKey: 'correctButNoPermission',
-                        msg: '{}',
-                    }
-
-                    mockSocket.receiveRaw(req)
-                })
+            setTimeout(() => {
+                mockSocket.disconnect()
+                done()
             })
         })
 
-        describe('disconnect', () => {
-            beforeEach((done) => {
-                wsMock.emit('connection', mockSocket)
-                mockSocket.receive(new Protocol.SubscribeRequest(
-                    'streamId',
-                    6,
-                    'correct',
-                ))
-                mockSocket.receive(new Protocol.SubscribeRequest(
-                    'streamId',
-                    4,
-                    'correct',
-                ))
-                mockSocket.receive(new Protocol.SubscribeRequest(
-                    'streamId2',
-                    0,
-                    'correct',
-                ))
-
-                setTimeout(() => {
-                    mockSocket.disconnect()
-                    done()
-                })
-            })
-
-            it('unsubscribes from realtimeAdapter on streams where there are no more connections', () => {
-                sinon.assert.calledWith(realtimeAdapter.unsubscribe, 'streamId', 6)
-                sinon.assert.calledWith(realtimeAdapter.unsubscribe, 'streamId', 4)
-                sinon.assert.calledWith(realtimeAdapter.unsubscribe, 'streamId2', 0)
-            })
-
-            it('decrements connection counter', () => {
-                assert.equal(server.volumeLogger.connectionCount, 0)
-            })
+        it('unsubscribes from realtimeAdapter on streams where there are no more connections', () => {
+            sinon.assert.calledWith(realtimeAdapter.unsubscribe, 'streamId', 6)
+            sinon.assert.calledWith(realtimeAdapter.unsubscribe, 'streamId', 4)
+            sinon.assert.calledWith(realtimeAdapter.unsubscribe, 'streamId2', 0)
         })
 
-        describe('createStreamObject', () => {
-            it('should return an object with the correct id, partition and state', () => {
-                const stream = server.createStreamObject('streamId', 3)
-                assert.equal(stream.id, 'streamId')
-                assert.equal(stream.partition, 3)
-                assert.equal(stream.state, 'init')
-            })
+        it('decrements connection counter', () => {
+            assert.equal(server.volumeLogger.connectionCount, 0)
+        })
+    })
 
-            it('should return an object that can be looked up', () => {
-                const stream = server.createStreamObject('streamId', 4)
-                assert.equal(server.getStreamObject('streamId', 4), stream)
-            })
+    describe('createStreamObject', () => {
+        it('should return an object with the correct id, partition and state', () => {
+            const stream = server.createStreamObject('streamId', 3)
+            assert.equal(stream.id, 'streamId')
+            assert.equal(stream.partition, 3)
+            assert.equal(stream.state, 'init')
         })
 
-        describe('getStreamObject', () => {
-            let stream
-            beforeEach(() => {
-                stream = server.createStreamObject('streamId', 0)
-            })
+        it('should return an object that can be looked up', () => {
+            const stream = server.createStreamObject('streamId', 4)
+            assert.equal(server.getStreamObject('streamId', 4), stream)
+        })
+    })
 
-            it('must return the requested stream', () => {
-                assert.equal(server.getStreamObject('streamId', 0), stream)
-            })
-
-            it('must return undefined if the stream does not exist', () => {
-                assert.equal(server.getStreamObject('streamId', 1), undefined)
-            })
+    describe('getStreamObject', () => {
+        let stream
+        beforeEach(() => {
+            stream = server.createStreamObject('streamId', 0)
         })
 
-        describe('deleteStreamObject', () => {
-            beforeEach(() => {
-                server.createStreamObject('streamId', 0)
-            })
+        it('must return the requested stream', () => {
+            assert.equal(server.getStreamObject('streamId', 0), stream)
+        })
 
-            it('must delete the requested stream', () => {
-                server.deleteStreamObject('streamId', 0)
-                assert.equal(server.getStreamObject('streamId', 0), undefined)
-            })
+        it('must return undefined if the stream does not exist', () => {
+            assert.equal(server.getStreamObject('streamId', 1), undefined)
+        })
+    })
+
+    describe('deleteStreamObject', () => {
+        beforeEach(() => {
+            server.createStreamObject('streamId', 0)
+        })
+
+        it('must delete the requested stream', () => {
+            server.deleteStreamObject('streamId', 0)
+            assert.equal(server.getStreamObject('streamId', 0), undefined)
         })
     })
 })
