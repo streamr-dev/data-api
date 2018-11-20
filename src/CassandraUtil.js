@@ -19,7 +19,7 @@ module.exports = class CassandraUtil extends events.EventEmitter {
         this.options = Object.assign({}, DEFAULT_OPTIONS, options)
     }
 
-    query(query, queryParams, lastKnownOffset, msgHandler, onDone, onMsgEnd = () => {}, givenContext) {
+    query(query, queryParams, lastKnownOffset, msgHandler, onDone, onMsgEnd, givenContext) {
         const ctx = givenContext || {
             streamId: queryParams[0],
             partition: queryParams[1],
@@ -27,7 +27,7 @@ module.exports = class CassandraUtil extends events.EventEmitter {
             currentOffset: null,
             msgHandler,
             onDone,
-            onMsgEnd,
+            onMsgEnd: onMsgEnd || (() => {}),
             refetchCount: 0,
         }
         this._doQuery(query, queryParams, msgHandler, (lastOffset) => {
@@ -64,7 +64,8 @@ module.exports = class CassandraUtil extends events.EventEmitter {
         let largestOffset = null
         this.client.stream(query, queryParams, {
             prepare: true, autoPage: true,
-        }).on('readable', () => {
+            // eslint-disable-next-line space-before-function-paren
+        }).on('readable', function() {
             // Invoked as soon a row is received
             let row = this.read()
             while (row) {
