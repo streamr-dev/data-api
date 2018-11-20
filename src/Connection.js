@@ -1,5 +1,6 @@
 const events = require('events')
 const debug = require('debug')('Connection')
+const qs = require('qs')
 
 module.exports = class Connection extends events.EventEmitter {
     constructor(socket) {
@@ -7,24 +8,12 @@ module.exports = class Connection extends events.EventEmitter {
         this.id = socket.id
         this.socket = socket
         this.streams = []
-        this.preferredPayloadVersion = Connection.getVersionFromUrl(socket.upgradeReq.url)
-    }
-
-    static getVersionFromUrl(url) {
-        const parts = url.split('?')
-        if (parts.length < 2) {
-            return undefined
+        const parts = socket.upgradeReq.url.split('?')
+        if (parts.length === 2) {
+            const queryObj = qs.parse(parts[1])
+            this.protocolVersion = queryObj.protocolVersion ? parseInt(queryObj.protocolVersion) : undefined
+            this.payloadVersion = queryObj.payloadVersion ? parseInt(queryObj.payloadVersion) : undefined
         }
-        const queryString = parts[1]
-        const vars = queryString.split('&')
-        let i
-        for (i = 0; i < vars.length; i++) {
-            const pair = vars[i].split('=')
-            if (pair[0] === 'version') {
-                return parseInt(pair[1])
-            }
-        }
-        return undefined
     }
 
     addStream(stream) {
@@ -48,12 +37,7 @@ module.exports = class Connection extends events.EventEmitter {
     }
 
     send(msg) {
-        let serialized
-        if (this.preferredPayloadVersion) {
-            serialized = msg.serialize(0, this.preferredPayloadVersion)
-        } else {
-            serialized = msg.serialize()
-        }
+        const serialized = msg.serialize(this.protocolVersion, this.payloadVersion)
         debug('send: %s: %o', this.id, serialized)
         this.socket.send(serialized)
     }

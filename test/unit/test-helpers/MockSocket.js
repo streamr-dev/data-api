@@ -8,7 +8,7 @@ module.exports = class MockSocket extends events.EventEmitter {
         this.sentMessages = []
         this.throwOnError = true
         this.upgradeReq = {
-            url: `some-url?version=${version}`,
+            url: `some-url?payloadVersion=${version}`,
         }
     }
 
