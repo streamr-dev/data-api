@@ -1,5 +1,5 @@
 const debug = require('debug')('Publisher')
-const StreamrBinaryMessage = require('./protocol/StreamrBinaryMessage')
+const StreamrBinaryMessageFactory = require('./protocol/StreamrBinaryMessageFactory')
 const InvalidMessageContentError = require('./errors/InvalidMessageContentError')
 const NotReadyError = require('./errors/NotReadyError')
 const VolumeLogger = require('./utils/VolumeLogger')
@@ -28,7 +28,7 @@ module.exports = class Publisher {
             throw new NotReadyError('Server not ready. Please try again shortly.')
         }
 
-        const streamrBinaryMessage = new StreamrBinaryMessage(
+        const streamrBinaryMessage = StreamrBinaryMessageFactory.fromValues(
             stream.id,
             streamPartition,
             timestamp || Date.now(),

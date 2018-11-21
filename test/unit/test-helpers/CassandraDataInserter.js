@@ -1,4 +1,5 @@
 const StreamrBinaryMessage = require('../../../src/protocol/StreamrBinaryMessage')
+const StreamrBinaryMessageV29 = require('../../../src/protocol/StreamrBinaryMessageV29')
 const StreamrBinaryMessageWithKafkaMetadata = require('../../../src/protocol/StreamrBinaryMessageWithKafkaMetadata')
 
 /**
@@ -51,14 +52,14 @@ module.exports = class CassandraDataInserter {
         }
         const address = '0xf915ed664e43c50eb7b9ca7cfeb992703ede55c4'
         const sig = '0xcb1fa20f2f8e75f27d3f171d236c071f0de39e4b497c51b390306fc6e7e112bb415ecea1bd093320dd91fd91113748286711122548c52a15179822a014dc14931b'
-        const msg = new StreamrBinaryMessage(
+        const msg = new StreamrBinaryMessageV29(
             this.streamId,
             partition,
             timestamp,
             ttl,
             contentType,
             Buffer.from(JSON.stringify(content), 'utf8'),
-            StreamrBinaryMessage.SIGNATURE_TYPE_ETH,
+            StreamrBinaryMessageV29.SIGNATURE_TYPE_ETH,
             address,
             sig,
         )

@@ -3,6 +3,7 @@ const BufferMaker = require('buffermaker')
 const BufferReader = require('buffer-reader')
 const Protocol = require('streamr-client-protocol')
 const StreamrBinaryMessage = require('./StreamrBinaryMessage')
+const StreamrBinaryMessageFactory = require('./StreamrBinaryMessageFactory')
 
 const VERSION = 0
 
@@ -37,35 +38,18 @@ class StreamrBinaryMessageWithKafkaMetadata {
 
     getStreamrBinaryMessage() {
         if (!(this.streamrBinaryMessage instanceof StreamrBinaryMessage)) {
-            this.streamrBinaryMessage = StreamrBinaryMessage.fromBytes(this.streamrBinaryMessage)
+            this.streamrBinaryMessage = StreamrBinaryMessageFactory.fromBytes(this.streamrBinaryMessage)
         }
         return this.streamrBinaryMessage
     }
 
     toObject(contentAsBuffer = true) {
         // Ensure the StreamrBinaryMessage is parsed
-        const m = this.getStreamrBinaryMessage(contentAsBuffer)
-        const withoutSig = {
-            version: m.version,
-            streamId: m.streamId,
-            partition: m.streamPartition,
-            timestamp: m.timestamp,
-            ttl: m.ttl,
-            offset: this.offset,
-            previousOffset: this.previousOffset,
-            contentType: m.contentType,
-            content: contentAsBuffer ? m.getContentBuffer()
-                .toString('utf8') : m.getContentParsed(),
-        }
-        if (m.version === 28) {
-            return withoutSig
-        }
-        return {
-            ...withoutSig,
-            signatureType: m.signatureType,
-            address: m.address,
-            signature: m.signature,
-        }
+        const m = this.getStreamrBinaryMessage()
+        const obj = m.toObject(contentAsBuffer)
+        obj.offset = this.offset
+        obj.previousOffset = this.previousOffset
+        return obj
     }
 
     toStreamMessage() {
@@ -89,7 +73,7 @@ class StreamrBinaryMessageWithKafkaMetadata {
 
 /* static */ StreamrBinaryMessageWithKafkaMetadata.fromBytes = (buf) => {
     const reader = new BufferReader(buf)
-    const streamrBinaryMessage = StreamrBinaryMessage.fromBytes(reader)
+    const streamrBinaryMessage = StreamrBinaryMessageFactory.fromBytes(reader)
 
     // Read the rest of the buffer, containing this class's fields
     const version = reader.nextInt8()

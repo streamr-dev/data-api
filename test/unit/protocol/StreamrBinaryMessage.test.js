@@ -2,6 +2,9 @@
 const assert = require('assert')
 const sinon = require('sinon')
 const StreamrBinaryMessage = require('../../../src/protocol/StreamrBinaryMessage')
+const StreamrBinaryMessageV28 = require('../../../src/protocol/StreamrBinaryMessageV28')
+const StreamrBinaryMessageV29 = require('../../../src/protocol/StreamrBinaryMessageV29')
+const StreamrBinaryMessageFactory = require('../../../src/protocol/StreamrBinaryMessageFactory')
 
 describe('StreamrBinaryMessage', () => {
     let version
@@ -18,7 +21,7 @@ describe('StreamrBinaryMessage', () => {
 
         beforeEach(() => {
             version = 28
-            bytes = new StreamrBinaryMessage(
+            bytes = new StreamrBinaryMessageV28(
                 streamId, streamPartition, timestamp, ttl,
                 StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'),
             ).toBytes()
@@ -26,7 +29,7 @@ describe('StreamrBinaryMessage', () => {
 
         describe('toBytes/fromBytes', () => {
             it('must not alter the field content', () => {
-                const m = StreamrBinaryMessage.fromBytes(bytes)
+                const m = StreamrBinaryMessageFactory.fromBytes(bytes)
 
                 assert.equal(m.version, version)
                 assert.equal(m.streamId, streamId)
@@ -49,7 +52,7 @@ describe('StreamrBinaryMessage', () => {
                 })
 
                 it('must not parse the content with contentAsBuffer=true', () => {
-                    const m = StreamrBinaryMessage.fromBytes(bytes, true)
+                    const m = StreamrBinaryMessageFactory.fromBytes(bytes, true)
 
                     assert.equal(m.version, version)
                     assert.equal(m.streamId, streamId)
@@ -69,14 +72,14 @@ describe('StreamrBinaryMessage', () => {
 
         describe('constructor', () => {
             it('must accept a buffer content', () => {
-                new StreamrBinaryMessage(
+                new StreamrBinaryMessageV28(
                     streamId, streamPartition, timestamp, ttl,
                     StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'),
                 )
             })
 
             it('must accept a string content', () => {
-                new StreamrBinaryMessage(
+                new StreamrBinaryMessageV28(
                     streamId, streamPartition, timestamp, ttl,
                     StreamrBinaryMessage.CONTENT_TYPE_JSON, 'I AM A STRING',
                 )
@@ -84,7 +87,7 @@ describe('StreamrBinaryMessage', () => {
 
             it('must throw if content is not a buffer or a string', () => {
                 assert.throws(() => {
-                    new StreamrBinaryMessage(
+                    new StreamrBinaryMessageV28(
                         streamId, streamPartition, timestamp, ttl,
                         StreamrBinaryMessage.CONTENT_TYPE_JSON, {
                             iam: 'an object',
@@ -103,7 +106,7 @@ describe('StreamrBinaryMessage', () => {
 
         beforeEach(() => {
             version = 29
-            bytes = new StreamrBinaryMessage(
+            bytes = new StreamrBinaryMessageV29(
                 streamId, streamPartition, timestamp, ttl,
                 StreamrBinaryMessage.CONTENT_TYPE_JSON, Buffer.from(JSON.stringify(msg), 'utf8'), signatureType, address, signature,
             ).toBytes()
@@ -111,7 +114,9 @@ describe('StreamrBinaryMessage', () => {
 
         describe('toBytes/fromBytes', () => {
             it('must not alter the field content', () => {
-                const m = StreamrBinaryMessage.fromBytes(bytes)
+                const m = StreamrBinaryMessageFactory.fromBytes(bytes)
+
+                console.log(m)
 
                 assert.equal(m.version, version)
                 assert.equal(m.streamId, streamId)
@@ -137,7 +142,7 @@ describe('StreamrBinaryMessage', () => {
                 })
 
                 it('must not parse the content with contentAsBuffer=true', () => {
-                    const m = StreamrBinaryMessage.fromBytes(bytes, true)
+                    const m = StreamrBinaryMessageFactory.fromBytes(bytes, true)
 
                     assert.equal(m.version, version)
                     assert.equal(m.streamId, streamId)
