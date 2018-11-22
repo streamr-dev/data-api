@@ -93,18 +93,18 @@ class StreamrBinaryMessageV28 extends StreamrBinaryMessage {
                 .toString('utf8') : this.getContentParsed(),
         }
     }
-}
 
-/* static */ StreamrBinaryMessageV28.fromBytes = (reader) => {
-    const ts = new Int64(reader.nextBuffer(8)).valueOf()
-    const ttl = reader.nextInt32BE()
-    const streamIdLength = reader.nextUInt8()
-    const streamId = reader.nextString(streamIdLength, 'UTF-8')
-    const streamPartition = reader.nextUInt8()
-    const contentType = reader.nextInt8()
-    const contentLength = reader.nextInt32BE()
-    const content = reader.nextBuffer(contentLength)
-    return new StreamrBinaryMessageV28(streamId, streamPartition, ts, ttl, contentType, content)
+    static fromBytes(reader) {
+        const ts = new Int64(reader.nextBuffer(8)).valueOf()
+        const ttl = reader.nextInt32BE()
+        const streamIdLength = reader.nextUInt8()
+        const streamId = reader.nextString(streamIdLength, 'UTF-8')
+        const streamPartition = reader.nextUInt8()
+        const contentType = reader.nextInt8()
+        const contentLength = reader.nextInt32BE()
+        const content = reader.nextBuffer(contentLength)
+        return new StreamrBinaryMessageV28(streamId, streamPartition, ts, ttl, contentType, content)
+    }
 }
 
 module.exports = StreamrBinaryMessageV28

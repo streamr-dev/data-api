@@ -69,26 +69,26 @@ class StreamrBinaryMessageWithKafkaMetadata {
             streamrBinaryMessage.signature,
         )
     }
-}
 
-/* static */ StreamrBinaryMessageWithKafkaMetadata.fromBytes = (buf) => {
-    const reader = new BufferReader(buf)
-    const streamrBinaryMessage = StreamrBinaryMessageFactory.fromBytes(reader)
+    static fromBytes(buf) {
+        const reader = new BufferReader(buf)
+        const streamrBinaryMessage = StreamrBinaryMessageFactory.fromBytes(reader)
 
-    // Read the rest of the buffer, containing this class's fields
-    const version = reader.nextInt8()
-    if (version === 0) {
-        const offset = new Int64(reader.nextBuffer(8)).valueOf()
-        const previousOffset = new Int64(reader.nextBuffer(8)).valueOf()
-        const kafkaPartition = reader.nextInt32BE()
+        // Read the rest of the buffer, containing this class's fields
+        const version = reader.nextInt8()
+        if (version === 0) {
+            const offset = new Int64(reader.nextBuffer(8)).valueOf()
+            const previousOffset = new Int64(reader.nextBuffer(8)).valueOf()
+            const kafkaPartition = reader.nextInt32BE()
 
-        return new StreamrBinaryMessageWithKafkaMetadata(
-            streamrBinaryMessage, offset,
-            previousOffset >= 0 ? previousOffset : undefined, kafkaPartition,
-        )
+            return new StreamrBinaryMessageWithKafkaMetadata(
+                streamrBinaryMessage, offset,
+                previousOffset >= 0 ? previousOffset : undefined, kafkaPartition,
+            )
+        }
+
+        throw new Error(`Unknown version: ${version}`)
     }
-
-    throw new Error(`Unknown version: ${version}`)
 }
 
 module.exports = StreamrBinaryMessageWithKafkaMetadata

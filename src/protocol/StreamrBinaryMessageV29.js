@@ -44,33 +44,33 @@ class StreamrBinaryMessageV29 extends StreamrBinaryMessageV28 {
         v28.signature = this.signature
         return v28
     }
+
+    static fromBytes(reader) {
+        const msgV28 = StreamrBinaryMessageV28.fromBytes(reader)
+        const signatureType = reader.nextInt8()
+        let address
+        let signature
+        if (signatureType === SIGNATURE_TYPE_ETH) {
+            address = bytesToHex(reader.nextBuffer(20)) // an Ethereum address is 20 bytes.
+            signature = bytesToHex(reader.nextBuffer(65)) // an Ethereum signature is 65 bytes.
+        } else if (signatureType !== SIGNATURE_TYPE_NONE) {
+            throw new Error(`Unknown signature type: ${signatureType}`)
+        }
+        return new StreamrBinaryMessageV29(
+            msgV28.streamId,
+            msgV28.streamPartition,
+            msgV28.timestamp,
+            msgV28.ttl,
+            msgV28.contentType,
+            msgV28.content,
+            signatureType,
+            address,
+            signature,
+        )
+    }
 }
 
 /* static */ StreamrBinaryMessageV29.SIGNATURE_TYPE_NONE = SIGNATURE_TYPE_NONE
 /* static */ StreamrBinaryMessageV29.SIGNATURE_TYPE_ETH = SIGNATURE_TYPE_ETH
-
-/* static */ StreamrBinaryMessageV29.fromBytes = (reader) => {
-    const msgV28 = StreamrBinaryMessageV28.fromBytes(reader)
-    const signatureType = reader.nextInt8()
-    let address
-    let signature
-    if (signatureType === SIGNATURE_TYPE_ETH) {
-        address = bytesToHex(reader.nextBuffer(20)) // an Ethereum address is 20 bytes.
-        signature = bytesToHex(reader.nextBuffer(65)) // an Ethereum signature is 65 bytes.
-    } else if (signatureType !== SIGNATURE_TYPE_NONE) {
-        throw new Error(`Unknown signature type: ${signatureType}`)
-    }
-    return new StreamrBinaryMessageV29(
-        msgV28.streamId,
-        msgV28.streamPartition,
-        msgV28.timestamp,
-        msgV28.ttl,
-        msgV28.contentType,
-        msgV28.content,
-        signatureType,
-        address,
-        signature,
-    )
-}
 
 module.exports = StreamrBinaryMessageV29
