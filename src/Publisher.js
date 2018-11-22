@@ -1,5 +1,5 @@
 const debug = require('debug')('Publisher')
-const StreamrBinaryMessageFactory = require('./protocol/StreamrBinaryMessageFactory')
+const StreamrBinaryMessageV29 = require('./protocol/StreamrBinaryMessageV29')
 const InvalidMessageContentError = require('./errors/InvalidMessageContentError')
 const NotReadyError = require('./errors/NotReadyError')
 const VolumeLogger = require('./utils/VolumeLogger')
@@ -28,14 +28,14 @@ module.exports = class Publisher {
             throw new NotReadyError('Server not ready. Please try again shortly.')
         }
 
-        const streamrBinaryMessage = StreamrBinaryMessageFactory.fromValues(
+        const streamrBinaryMessage = new StreamrBinaryMessageV29(
             stream.id,
             streamPartition,
             timestamp || Date.now(),
             ttl || 0,
             contentType,
             content,
-            signatureType,
+            signatureType || StreamrBinaryMessageV29.SIGNATURE_TYPE_NONE,
             address,
             signature,
         )

@@ -14,10 +14,4 @@ module.exports = {
         }
         throw new Error(`Unknown version: ${version}`)
     },
-    fromValues: (streamId, streamPartition, timestamp, ttl, contentType, content, signatureType, address, signature) => {
-        if (signatureType) {
-            return new StreamrBinaryMessageV29(streamId, streamPartition, timestamp, ttl, contentType, content, signatureType, address, signature)
-        }
-        return new StreamrBinaryMessageV28(streamId, streamPartition, timestamp, ttl, contentType, content)
-    },
 }
