@@ -4,33 +4,14 @@ const StreamrBinaryMessageV28 = require('./StreamrBinaryMessageV28')
 const SIGNATURE_TYPE_NONE = 0
 const SIGNATURE_TYPE_ETH = 1
 
-function hexToBytes(hex) {
+function hexToBytes(buf, hex) {
     const hexToParse = hex.startsWith('0x') ? hex.substr(2) : hex
-    let bytes
-    let c
-    for (bytes = [], c = 0; c < hexToParse.length; c += 2) {
-        bytes.push(parseInt(hexToParse.substr(c, 2), 16))
-    }
-    return bytes
+    const b = Buffer.from(hexToParse, 'hex')
+    return buf.string(b)
 }
 
 function bytesToHex(bytes) {
-    let hex
-    let i
-    for (hex = [], i = 0; i < bytes.length; i++) {
-        hex.push((bytes[i] >>> 4).toString(16))
-        hex.push((bytes[i] & 0xF).toString(16))
-    }
-    return `0x${hex.join('')}`
-}
-
-function bytesBuf(buf, byteArray) {
-    let newBuf = buf
-    let i
-    for (i = 0; i < byteArray.length; i++) {
-        newBuf = newBuf.UInt8(byteArray[i])
-    }
-    return newBuf
+    return `0x${bytes.toString('hex')}`
 }
 
 class StreamrBinaryMessageV29 extends StreamrBinaryMessageV28 {
@@ -48,9 +29,9 @@ class StreamrBinaryMessageV29 extends StreamrBinaryMessageV28 {
         buf = buf.Int8(this.signatureType)
         if (this.signatureType === SIGNATURE_TYPE_ETH) {
             // 21 + streamIdLength + contentLength: address (20)
-            buf = bytesBuf(buf, hexToBytes(this.address))
+            buf = hexToBytes(buf, this.address)
             // 41 + streamIdLength + contentLength: signature (65)
-            buf = bytesBuf(buf, hexToBytes(this.signature))
+            buf = hexToBytes(buf, this.signature)
         }
         return buf
     }
