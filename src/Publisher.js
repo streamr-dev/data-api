@@ -1,5 +1,6 @@
 const debug = require('debug')('Publisher')
 const StreamrBinaryMessageV29 = require('./protocol/StreamrBinaryMessageV29')
+const MessageNotSignedError = require('./errors/MessageNotSignedError')
 const InvalidMessageContentError = require('./errors/InvalidMessageContentError')
 const NotReadyError = require('./errors/NotReadyError')
 const VolumeLogger = require('./utils/VolumeLogger')
@@ -17,6 +18,9 @@ module.exports = class Publisher {
     }
 
     async publish(stream, timestamp = Date.now(), ttl = 0, contentType, content, partitionKey, signatureType, address, signature) {
+        if (stream.requireSignedData && !signature) {
+            throw new MessageNotSignedError('This stream requires published data to be signed.')
+        }
         if (!content) {
             throw new InvalidMessageContentError(`Empty message content rejected for stream ${stream.id}`)
         }
