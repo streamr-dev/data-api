@@ -75,7 +75,7 @@ module.exports = async (externalConfig) => {
     )
 
     // Rest endpoints
-    app.use('/api/v1', dataQueryEndpoints(cassandra, streamFetcher, volumeLogger))
+    app.use('/api/v1', dataQueryEndpoints(storage, streamFetcher, volumeLogger))
     app.use('/api/v1', dataProduceEndpoints(streamFetcher, publisher, volumeLogger))
     app.use('/api/v1', volumeEndpoint(volumeLogger))
 
