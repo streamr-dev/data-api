@@ -1,5 +1,8 @@
 const { Readable, Transform } = require('stream')
 const cassandra = require('cassandra-driver')
+const Protocol = require('streamr-client-protocol')
+
+const { MessageLayer } = Protocol
 
 const callbackToPromise = (method, ...args) => {
     return new Promise((resolve, reject) => {
@@ -9,14 +12,7 @@ const callbackToPromise = (method, ...args) => {
     })
 }
 
-const parseRow = (row) => ({
-    streamId: row.id,
-    streamPartition: row.partition,
-    ts: row.ts.getTime(),
-    sequenceNo: row.sequence_no,
-    publisherId: row.publisher_id,
-    payload: row.payload.toString(),
-})
+const parseRow = (row) => MessageLayer.StreamMessageFactory.deserialize(row.payload.toString())
 
 class Storage {
     constructor(cassandraClient) {
@@ -25,17 +21,15 @@ class Storage {
         this.stream = cassandraClient.stream.bind(cassandraClient)
     }
 
-    store(streamId, streamPartition, timestamp, sequenceNo, publisherId, payload) {
-        const encodedPayload = Buffer.from(JSON.stringify(payload))
-
+    store(streamMessage) {
         const insertStatement = 'INSERT INTO stream_data (id, partition, ts, sequence_no, publisher_id, payload) VALUES (?, ?, ?, ?, ?, ?)'
         return callbackToPromise(this.execute, insertStatement, [
-            streamId,
-            streamPartition,
-            timestamp,
-            sequenceNo,
-            publisherId,
-            encodedPayload,
+            streamMessage.getStreamId(),
+            streamMessage.getStreamPartition(),
+            streamMessage.getTimestamp(),
+            streamMessage.messageId.sequenceNumber,
+            streamMessage.getPublisherId(),
+            Buffer.from(streamMessage.serialize()),
         ], {
             prepare: true,
         })

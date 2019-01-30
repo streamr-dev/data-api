@@ -6,7 +6,7 @@ const VolumeLogger = require('../utils/VolumeLogger')
 const authenticationMiddleware = require('./RequestAuthenticatorMiddleware')
 
 function onDataFetchDone(res, dataPoints, wrapper, content, volumeLogger) {
-    return (largestOffset, err) => {
+    return (err) => {
         if (err) {
             console.log(err)
             res.status(500).send({
@@ -71,6 +71,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
             )
             streamingData.on('data', dataPoints.push.bind(dataPoints))
             streamingData.on('end', onDataFetchDone(res, dataPoints, wrapperOption.toLowerCase(), contentOption.toLowerCase(), volumeLogger))
+            streamingData.on('error', console.log)
         }
     })
 

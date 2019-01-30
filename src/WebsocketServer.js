@@ -161,8 +161,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         Promise.all([
             this.streamFetcher.authenticate(request.streamId, request.apiKey, request.sessionToken),
             this.latestOffsetFetcher.fetchOffset(request.streamId, request.streamPartition),
-        ]).then((results) => {
-            const latestKnownOffset = results[1]
+        ]).then(() => {
             const streamingStorageData = resendTypeHandler()
             streamingStorageData.on('data', msgHandler)
             streamingStorageData.on('end', doneHandler)
