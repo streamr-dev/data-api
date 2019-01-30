@@ -158,10 +158,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
             }
         }
 
-        Promise.all([
-            this.streamFetcher.authenticate(request.streamId, request.apiKey, request.sessionToken),
-            this.latestOffsetFetcher.fetchOffset(request.streamId, request.streamPartition),
-        ]).then(() => {
+        this.streamFetcher.authenticate(request.streamId, request.apiKey, request.sessionToken).then(() => {
             const streamingStorageData = resendTypeHandler()
             streamingStorageData.on('data', msgHandler)
             streamingStorageData.on('end', doneHandler)
@@ -203,39 +200,12 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         ))
     }
 
-    handleResendRequestV0(connection, request) {
-        const handler = () => {
-            if (request.resendOptions.resend_all === true) {
-                // Resend all TODO: no longer suppported, replace with getLast or something?
-                return null
-            } else if (request.resendOptions.resend_from != null && request.resendOptions.resend_to != null) {
-                // Resend range TODO: no longer supported, what to replace with?
-                return null
-            } else if (request.resendOptions.resend_from != null) {
-                // Resend from a given offset TODO: no longer supported, what to replace with?
-                return null
-            } else if (request.resendOptions.resend_last != null) {
-                // Resend the last N messages
-                return this.storage.fetchLatest(
-                    request.streamId,
-                    request.streamPartition,
-                    request.resendOptions.resend_last,
-                )
-            } else if (request.resendOptions.resend_from_time != null) {
-                // Resend from a given time
-                return this.storage.fetchFromTimestamp(
-                    request.streamId,
-                    request.streamPartition,
-                    request.resendOptions.resend_from_time,
-                )
-            }
-
-            debug('handleResendRequest: unknown resend request: %o', JSON.stringify(request))
-            connection.sendError(`Unknown resend options: ${JSON.stringify(request.resendOptions)}`)
-            return null
-        }
-        this.handleResendRequest(connection, request, handler)
+    /* eslint-disable class-methods-use-this */
+    handleResendRequestV0(connection) {
+        connection.sendError('ResendRequestV0 is not supported anymore. Please update your Streamr client.')
+        return null
     }
+    /* eslint-enable class-methods-use-this */
 
     /**
      * Creates and returns a Stream object, holding the Stream subscription state.
