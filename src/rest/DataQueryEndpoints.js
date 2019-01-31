@@ -69,9 +69,9 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
                 partition,
                 count,
             )
+            streamingData.on('error', onDataFetchDone(res))
             streamingData.on('data', dataPoints.push.bind(dataPoints))
             streamingData.on('end', onDataFetchDone(res, dataPoints, wrapperOption.toLowerCase(), contentOption.toLowerCase(), volumeLogger))
-            streamingData.on('error', console.log)
         }
     })
 
@@ -133,6 +133,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
                     partition,
                     new Date(fromTimestamp),
                 )
+                streamingData.on('error', onDataFetchDone(res))
                 streamingData.on('data', dataPoints.push.bind(dataPoints))
                 streamingData.on('end', onDataFetchDone(res, dataPoints, wrapper, content, volumeLogger))
             } else {
@@ -142,6 +143,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
                     new Date(fromTimestamp),
                     new Date(toTimestamp),
                 )
+                streamingData.on('error', onDataFetchDone(res))
                 streamingData.on('data', dataPoints.push.bind(dataPoints))
                 streamingData.on('end', onDataFetchDone(res, dataPoints, wrapper, content, volumeLogger))
             }

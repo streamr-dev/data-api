@@ -148,13 +148,17 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                // TODO: fix this test
                 historicalAdapterStub.fetchLatest = () => {
                     const readableStream = new Readable({
                         objectMode: true,
                         read() {},
                     })
-                    readableStream.emit('error', new Error('error'))
+                    readableStream.once('newListener', (event, listener) => {
+                        if (event === 'error') {
+                            readableStream.addListener('error', listener)
+                            readableStream.emit('error', new Error('error'))
+                        }
+                    })
                     return readableStream
                 }
 
@@ -321,13 +325,17 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                // TODO: fix this test
                 historicalAdapterStub.fetchFromTimestamp = () => {
                     const readableStream = new Readable({
                         objectMode: true,
                         read() {},
                     })
-                    readableStream.emit('error', new Error('error'))
+                    readableStream.once('newListener', (event, listener) => {
+                        if (event === 'error') {
+                            readableStream.addListener('error', listener)
+                            readableStream.emit('error', new Error('error'))
+                        }
+                    })
                     return readableStream
                 }
 
@@ -386,13 +394,17 @@ describe('DataQueryEndpoints', () => {
             })
 
             it('responds 500 and error message if historicalDataAdapter signals error', (done) => {
-                // TODO: fix this test
                 historicalAdapterStub.fetchBetweenTimestamps = () => {
                     const readableStream = new Readable({
                         objectMode: true,
                         read() {},
                     })
-                    readableStream.emit('error', new Error('error'))
+                    readableStream.once('newListener', (event, listener) => {
+                        if (event === 'error') {
+                            readableStream.addListener('error', listener)
+                            readableStream.emit('error', new Error('error'))
+                        }
+                    })
                     return readableStream
                 }
 
