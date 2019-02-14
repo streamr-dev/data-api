@@ -39,7 +39,7 @@ describe('WebsocketServer', () => {
     )
 
     const streamMessagev30 = new MessageLayer.StreamMessageV30(
-        ['streamId', 0, 1491037200100, 0, 'publisherId'],
+        ['streamId', 0, 1491037200100, 0, 'publisherId', '1'],
         [1491037200000, 0],
         MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
         {

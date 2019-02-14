@@ -15,7 +15,7 @@ describe('Storage', () => {
 
     function buildMsg(id, streamPartition, timestamp, sequenceNumber, publisherId, content) {
         return new StreamMessageV30(
-            [id, streamPartition, timestamp, sequenceNumber, publisherId], null,
+            [id, streamPartition, timestamp, sequenceNumber, publisherId, null], null,
             StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
     }
