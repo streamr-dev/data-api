@@ -150,6 +150,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 request.streamPartition,
                 request.fromMsgRef,
                 request.publisherId,
+                request.msgChainId,
             ))
         } else {
             this.handleResendRequest(connection, request, () => this.storage.fetchFromTimestamp(
@@ -168,6 +169,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 request.fromMsgRef,
                 request.toMsgRef,
                 request.publisherId,
+                request.msgChainId,
             ))
         } else {
             this.handleResendRequest(connection, request, () => this.storage.fetchBetweenTimestamps(
@@ -199,6 +201,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 [request.resendOptions.resend_from, 0], // use offset as timestamp
                 [request.resendOptions.resend_to, 0], // use offset as timestamp)
                 null,
+                null,
                 request.sessionToken,
             )
             requestV1.apiKey = request.apiKey
@@ -209,6 +212,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 request.streamPartition,
                 request.subId,
                 [request.resendOptions.resend_from, 0], // use offset as timestamp
+                null,
                 null,
                 request.sessionToken,
             )

@@ -207,7 +207,7 @@ describe('WebsocketServer', () => {
             it('requests messages from given timestamp range from historicalAdapter (V1)', (done) => {
                 const request = ControlLayer.ResendRangeRequest.create(
                     'streamId', 0, 'sub', [Date.now().toString(), null],
-                    [Date.now().toString(), null], null, 'correct',
+                    [Date.now().toString(), null], null, null, 'correct',
                 )
 
                 mockSocket.receive(request)
@@ -223,7 +223,7 @@ describe('WebsocketServer', () => {
             it('requests messages from given message refs range from historicalAdapter (V1)', (done) => {
                 const request = ControlLayer.ResendRangeRequest.create(
                     'streamId', 0, 'sub', [Date.now().toString(), 0],
-                    [Date.now().toString(), 0], 'publisherId', 'correct',
+                    [Date.now().toString(), 0], 'publisherId', 'msgChainId', 'correct',
                 )
 
                 mockSocket.receive(request)
@@ -231,7 +231,7 @@ describe('WebsocketServer', () => {
                 setTimeout(() => {
                     sinon.assert.calledWith(
                         historicalAdapter.fetchBetweenMessageRefsForPublisher, request.streamId, request.streamPartition,
-                        request.fromMsgRef, request.toMsgRef, request.publisherId,
+                        request.fromMsgRef, request.toMsgRef, request.publisherId, request.msgChainId,
                     )
                     done()
                 })
@@ -242,7 +242,7 @@ describe('WebsocketServer', () => {
             it('requests messages from given timestamp from historicalAdapter (V1)', (done) => {
                 const request = ControlLayer.ResendFromRequest.create(
                     'streamId', 0, 'sub',
-                    [Date.now().toString(), null], null, 'correct',
+                    [Date.now().toString(), null], null, null, 'correct',
                 )
 
                 mockSocket.receive(request)
@@ -258,7 +258,7 @@ describe('WebsocketServer', () => {
             it('requests messages from given message ref from historicalAdapter (V1)', (done) => {
                 const request = ControlLayer.ResendFromRequest.create(
                     'streamId', 0, 'sub',
-                    [Date.now().toString(), 0], 'publisherId', 'correct',
+                    [Date.now().toString(), 0], 'publisherId', 'msgChainId', 'correct',
                 )
 
                 mockSocket.receive(request)
@@ -266,7 +266,7 @@ describe('WebsocketServer', () => {
                 setTimeout(() => {
                     sinon.assert.calledWith(
                         historicalAdapter.fetchFromMessageRefForPublisher, request.streamId, request.streamPartition,
-                        request.fromMsgRef, request.publisherId,
+                        request.fromMsgRef, request.publisherId, request.msgChainId,
                     )
                     done()
                 })
