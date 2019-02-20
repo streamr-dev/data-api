@@ -5,7 +5,6 @@ const { StreamMessageFactory } = require('streamr-client-protocol').MessageLayer
 
 const parseRow = (row) => StreamMessageFactory.deserialize(row.payload.toString())
 
-// TODO: once the cassandra schema with the new message chain id is set up, use it here
 class Storage {
     constructor(cassandraClient) {
         this.cassandraClient = cassandraClient
