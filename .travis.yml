@@ -70,5 +70,4 @@ jobs:
     - OWNER=streamr
     - IMAGE_NAME=data-api
     - TAG=latest
-    script:
-      script: bash .travis_scripts/deploy_docker.sh production
+    script: bash .travis_scripts/deploy_docker.sh production
