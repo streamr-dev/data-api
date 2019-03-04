@@ -1,6 +1,9 @@
 # Use official node runtime as base image
 FROM node:8.11.4-alpine
 
+RUN apk update
+RUN apk add bash
+
 # Set the working directory to /app
 WORKDIR /app
 
@@ -22,12 +25,5 @@ ENV CASSANDRA_HOST cassandra
 ENV CASSANDRA_KEYSPACE streamr_dev
 ENV STREAMR_URL http://127.0.0.1:8081/streamr-core
 
-CMD node data-api.js \
-    --data-topic ${KAFKA_TOPIC} \
-    --zookeeper ${ZOOKEEPER_HOST} \
-    --redis ${REDIS_HOST} \
-    --redis-pwd ${REDIS_PASSWORD} \
-    --cassandra ${CASSANDRA_HOST} \
-    --keyspace ${CASSANDRA_KEYSPACE} \
-    --streamr ${STREAMR_URL} \
-    --port 8890
+# Wait for Cassandra to be ready
+CMD ["sh", "-c", "./docker-start.sh"]
