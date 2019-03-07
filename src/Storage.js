@@ -135,7 +135,7 @@ const startCassandraStorage = async (contactPoints, localDataCenter, keyspace) =
         localDataCenter,
         keyspace,
     })
-    const nbTrials = 10
+    const nbTrials = 20
     let retryCount = nbTrials
     let lastError = ''
     while (retryCount > 0) {
