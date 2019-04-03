@@ -35,6 +35,8 @@ module.exports = class StreamFetcher {
 
         return fetch(`${this.streamResourceUrl}/${streamId}`, {
             headers,
+        }).catch((e) => {
+            console.error(`failed to communicate with E&E: ${e}`)
         }).then((response) => {
             if (response.status !== 200) {
                 debug(
@@ -65,6 +67,8 @@ module.exports = class StreamFetcher {
 
         return fetch(`${this.streamResourceUrl}/${streamId}/permissions/me`, {
             headers,
+        }).catch((e) => {
+            console.error(`failed to communicate with E&E: ${e}`)
         }).then((response) => {
             if (response.status !== 200) {
                 return response.text().then((errorMsg) => {
