@@ -80,9 +80,17 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                     const content = streamMessage.getParsedContent()
                     const fields = []
                     Object.keys(content).forEach((key) => {
+                        let type
+                        if (Array.isArray(content[key])) {
+                            type = 'list'
+                        } else if ((typeof content[key]) === 'object') {
+                            type = 'map'
+                        } else {
+                            type = typeof content[key]
+                        }
                         fields.push({
                             name: key,
-                            type: typeof content[key],
+                            type,
                         })
                     })
                     this.streamFetcher.setFields(streamId, fields, request.apiKey, request.sessionToken).catch(() => {

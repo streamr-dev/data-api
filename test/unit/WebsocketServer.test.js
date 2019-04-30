@@ -78,8 +78,9 @@ describe('WebsocketServer', () => {
         {
             field1: 'world',
             field2: 12,
-            field3: [],
-            field4: {},
+            field3: true,
+            field4: [],
+            field5: {},
         },
         MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH,
         'signature',
@@ -769,10 +770,13 @@ describe('WebsocketServer', () => {
                     type: 'number',
                 }, {
                     name: 'field3',
-                    type: 'object',
+                    type: 'boolean',
                 }, {
                     name: 'field4',
-                    type: 'object',
+                    type: 'list',
+                }, {
+                    name: 'field5',
+                    type: 'map',
                 }])
                 return Promise.resolve()
             })
