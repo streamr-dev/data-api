@@ -23,7 +23,7 @@ describe('DataQueryEndpoints', () => {
         return new StreamMessageV30(
             ['streamId', 0, new Date(2017, 3, 1, 12, 0, 0).getTime(), 0, 'publisherId', '1'],
             [null, 0],
-            StreamMessage.CONTENT_TYPES.JSON,
+            StreamMessage.CONTENT_TYPES.MESSAGE,
             content,
             StreamMessage.SIGNATURE_TYPES.NONE,
             null,

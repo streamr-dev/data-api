@@ -15,7 +15,7 @@ describe('RedisUtil', () => {
     function streamMessage() {
         return new StreamMessageV30(
             [streamId, 1, 1488214484821, 0, 'publisherId', '1'], null,
-            StreamMessage.CONTENT_TYPES.JSON, {
+            StreamMessage.CONTENT_TYPES.MESSAGE, {
                 hello: 'world',
             }, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
@@ -24,7 +24,7 @@ describe('RedisUtil', () => {
     function streamMessageSigned() {
         return new StreamMessageV30(
             [streamId, 1, 1488214484821, 0, '0xf915ed664e43c50eb7b9ca7cfeb992703ede55c4', '1'], null,
-            StreamMessage.CONTENT_TYPES.JSON, {
+            StreamMessage.CONTENT_TYPES.MESSAGE, {
                 hello: 'world',
             }, StreamMessage.SIGNATURE_TYPES.ETH,
             '0xcb1fa20f2f8e75f27d3f171d236c071f0de39e4b497c51b390306fc6e7e112bb415ecea1bd093320dd91fd91113748286711122548c52a15179822a014dc14931b',

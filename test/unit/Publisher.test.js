@@ -20,7 +20,7 @@ describe('Publisher', () => {
     }
 
     const streamMessageUnsigned = new StreamMessageV30(
-        [stream.id, 0, Date.now(), 0, 'publisherId', '1'], [null, 0], StreamMessage.CONTENT_TYPES.JSON,
+        [stream.id, 0, Date.now(), 0, 'publisherId', '1'], [null, 0], StreamMessage.CONTENT_TYPES.MESSAGE,
         msg, StreamMessage.SIGNATURE_TYPES.NONE, null,
     )
 
@@ -69,7 +69,7 @@ describe('Publisher', () => {
                     assert.equal(streamMessage.getStreamId(), stream.id)
                     assert.equal(streamMessage.getStreamPartition(), 0)
                     assert.equal(streamMessage.getTimestamp(), streamMessageUnsigned.getTimestamp())
-                    assert.equal(streamMessage.contentType, StreamMessage.CONTENT_TYPES.JSON)
+                    assert.equal(streamMessage.contentType, StreamMessage.CONTENT_TYPES.MESSAGE)
                     assert.equal(streamMessage.getContent(), JSON.stringify(msg))
                     done()
                 }
