@@ -226,7 +226,7 @@ describe('DataQueryEndpoints', () => {
                         sinon.assert.calledOnce(historicalAdapterStub.fetchFromTimestamp)
                         sinon.assert.calledWith(
                             historicalAdapterStub.fetchFromTimestamp, 'streamId', 0,
-                            new Date(1496408255672),
+                            1496408255672,
                         )
                         done()
                     })
@@ -406,7 +406,7 @@ describe('DataQueryEndpoints', () => {
                         sinon.assert.calledOnce(historicalAdapterStub.fetchBetweenTimestamps)
                         sinon.assert.calledWith(
                             historicalAdapterStub.fetchBetweenTimestamps, 'streamId', 0,
-                            new Date(1496408255672), new Date(1496415670909),
+                            1496408255672, 1496415670909,
                         )
                         done()
                     })
