@@ -104,7 +104,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
                 streamingData = storage.fetchFromTimestamp(
                     req.params.id,
                     partition,
-                    new Date(fromTimestamp),
+                    fromTimestamp,
                 )
             }
             streamingData.on('error', onDataFetchDone(res))
@@ -159,8 +159,8 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
                 streamingData = storage.fetchBetweenTimestamps(
                     req.params.id,
                     partition,
-                    new Date(fromTimestamp),
-                    new Date(toTimestamp),
+                    fromTimestamp,
+                    toTimestamp,
                 )
             }
             streamingData.on('error', onDataFetchDone(res))
