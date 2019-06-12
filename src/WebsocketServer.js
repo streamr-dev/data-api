@@ -311,7 +311,8 @@ module.exports = class WebsocketServer extends events.EventEmitter {
             const connections = stream.getConnections()
 
             connections.forEach((connection) => {
-                if (streamMessage.encryptionType !== StreamMessage.ENCRYPTION_TYPES.NONE && connection.messageLayerVersion < 31) {
+                const isEncrypted = streamMessage.encryptionType !== StreamMessage.ENCRYPTION_TYPES.NONE
+                if (isEncrypted && !StreamMessage.versionSupportsEncryption(connection.messageLayerVersion)) {
                     connection.sendError('Encrypted message received. Upgrade your client to be able to decrypt.')
                 } else {
                     connection.send(ControlLayer.BroadcastMessage.create(streamMessage))
