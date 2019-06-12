@@ -1,11 +1,13 @@
 const events = require('events')
 const debug = require('debug')('WebsocketServer')
 const debugProtocol = require('debug')('WebsocketServer:protocol')
-const { ControlLayer } = require('streamr-client-protocol')
+const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
 const Stream = require('./Stream')
 const Connection = require('./Connection')
 const HttpError = require('./errors/HttpError')
 const VolumeLogger = require('./utils/VolumeLogger')
+
+const { StreamMessage } = MessageLayer
 
 function getStreamLookupKey(streamId, streamPartition) {
     return `${streamId}-${streamPartition}`
@@ -309,7 +311,12 @@ module.exports = class WebsocketServer extends events.EventEmitter {
             const connections = stream.getConnections()
 
             connections.forEach((connection) => {
-                connection.send(ControlLayer.BroadcastMessage.create(streamMessage))
+                const isEncrypted = streamMessage.encryptionType !== StreamMessage.ENCRYPTION_TYPES.NONE
+                if (isEncrypted && !StreamMessage.versionSupportsEncryption(connection.messageLayerVersion)) {
+                    connection.sendError('Encrypted message received. Upgrade your client to be able to decrypt.')
+                } else {
+                    connection.send(ControlLayer.BroadcastMessage.create(streamMessage))
+                }
             })
 
             this.volumeLogger.logOutput(streamMessage.getSerializedContent().length * connections.length)
