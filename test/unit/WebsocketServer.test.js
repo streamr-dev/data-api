@@ -97,6 +97,16 @@ describe('WebsocketServer', () => {
         'signature',
     )
 
+    const streamMessagev31 = new MessageLayer.StreamMessageV31(
+        ['streamId', 0, 1491037200100, 0, 'publisherId', '1'],
+        [1491037200000, 0],
+        MessageLayer.StreamMessage.CONTENT_TYPES.MESSAGE,
+        MessageLayer.StreamMessage.ENCRYPTION_TYPES.AES,
+        'dfdfggafjgsljdgjdfgajlgjiaogjer',
+        MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH,
+        'signature',
+    )
+
     beforeEach(() => {
         realtimeAdapter = new events.EventEmitter()
         realtimeAdapter.subscribe = sinon.stub()
@@ -418,6 +428,22 @@ describe('WebsocketServer', () => {
 
             setTimeout(() => {
                 assert.deepEqual(mockSocket.sentMessages[1], expectedResponse.serialize(controlLayerVersion, messageLayerVersion))
+                done()
+            })
+        })
+        it('emits error response to old client when receiving from Redis an encrypted message.', (done) => {
+            mockSocket.throwOnError = false
+            mockSocket.receive(ControlLayer.SubscribeRequest.create('streamId', 0, 'correct'))
+
+            setTimeout(() => {
+                realtimeAdapter.emit('message', streamMessagev31)
+            })
+
+            const expectedResponse = ControlLayer.ErrorResponse.create('Encrypted message received. Upgrade your client to be able to decrypt.')
+
+            setTimeout(() => {
+                assert.deepEqual(mockSocket.sentMessages[1], expectedResponse.serialize(controlLayerVersion))
+                mockSocket.throwOnError = true
                 done()
             })
         })
