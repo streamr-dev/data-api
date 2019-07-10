@@ -31,3 +31,5 @@ node_modules
 .idea/dictionaries/
 .lock-wscript
 .DS_Store
+.idea/codeStyles/Project.xml
+.idea/runConfigurations/Run_Data_API.xml
