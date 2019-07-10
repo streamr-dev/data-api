@@ -1,7 +1,9 @@
 const events = require('events')
+
 const kafka = require('kafka-node')
 const debug = require('debug')('KafkaUtil')
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
+
 const FailedToPublishError = require('./errors/FailedToPublishError')
 
 module.exports = class KafkaUtil extends events.EventEmitter {

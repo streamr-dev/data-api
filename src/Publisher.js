@@ -1,4 +1,5 @@
 const debug = require('debug')('Publisher')
+
 const MessageNotSignedError = require('./errors/MessageNotSignedError')
 const NotReadyError = require('./errors/NotReadyError')
 const VolumeLogger = require('./utils/VolumeLogger')

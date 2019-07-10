@@ -1,4 +1,5 @@
 const assert = require('assert')
+
 const redis = require('redis')
 const { StreamMessage, StreamMessageV30 } = require('streamr-client-protocol').MessageLayer
 

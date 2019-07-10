@@ -1,7 +1,9 @@
 const events = require('events')
+
 const debug = require('debug')('WebsocketServer')
 const debugProtocol = require('debug')('WebsocketServer:protocol')
 const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
+
 const Stream = require('./Stream')
 const Connection = require('./Connection')
 const HttpError = require('./errors/HttpError')
@@ -76,8 +78,8 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 }
                 const streamMessage = request.getStreamMessage(streamPartition)
 
-                if (!this.configSet[streamId] && stream.autoConfigure &&
-                    (!stream.config || !stream.config.fields || stream.config.fields.length === 0)) {
+                if (!this.configSet[streamId] && stream.autoConfigure
+                    && (!stream.config || !stream.config.fields || stream.config.fields.length === 0)) {
                     this.configSet[streamId] = true
                     const content = streamMessage.getParsedContent()
                     const fields = []
@@ -363,6 +365,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
                 if (stream.state === 'subscribed') {
                     onSubscribe()
                 }
+
                 // If the Stream is not yet subscribed, wait for the event
                 if (stream.state !== 'subscribed') {
                     stream.once('subscribed', (err) => {

@@ -1,4 +1,5 @@
 const http = require('http')
+
 const cors = require('cors')
 const express = require('express')
 const ws = require('sc-uws')
@@ -12,7 +13,6 @@ const StreamrKafkaProducer = require('./src/KafkaUtil')
 const Partitioner = require('./src/Partitioner')
 const Publisher = require('./src/Publisher')
 const VolumeLogger = require('./src/utils/VolumeLogger')
-
 const dataQueryEndpoints = require('./src/rest/DataQueryEndpoints')
 const dataProduceEndpoints = require('./src/rest/DataProduceEndpoints')
 const volumeEndpoint = require('./src/rest/VolumeEndpoint')

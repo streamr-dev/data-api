@@ -1,5 +1,7 @@
 const assert = require('assert')
+
 const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
+
 const Connection = require('../../src/Connection.js')
 const Stream = require('../../src/Stream.js')
 

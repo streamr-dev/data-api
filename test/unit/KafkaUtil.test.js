@@ -1,5 +1,7 @@
 const assert = require('assert')
+
 const sinon = require('sinon')
+
 const KafkaUtil = require('../../src/KafkaUtil')
 const FailedToPublishError = require('../../src/errors/FailedToPublishError')
 

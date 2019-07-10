@@ -3,7 +3,9 @@
  */
 const express = require('express')
 const { MessageRef } = require('streamr-client-protocol').MessageLayer
+
 const VolumeLogger = require('../utils/VolumeLogger')
+
 const authenticationMiddleware = require('./RequestAuthenticatorMiddleware')
 
 function onDataFetchDone(res, dataPoints, wrapper, content, volumeLogger) {
@@ -29,7 +31,7 @@ function onDataFetchDone(res, dataPoints, wrapper, content, volumeLogger) {
 }
 
 function parseIntIfExists(x) {
-    return x === undefined ? undefined : parseInt(x)
+    return x === undefined ? undefined : parseInt(x, 10)
 }
 
 module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) => {
@@ -39,7 +41,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
         '/streams/:id/data/partitions/:partition',
         // partition parsing middleware
         (req, res, next) => {
-            if (Number.isNaN(parseInt(req.params.partition))) {
+            if (Number.isNaN(parseInt(req.params.partition, 10))) {
                 res.status(400).send({
                     error: `Path parameter "partition" not a number: ${req.params.partition}`,
                 })
@@ -52,8 +54,8 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
     )
 
     router.get('/streams/:id/data/partitions/:partition/last', (req, res) => {
-        const partition = parseInt(req.params.partition)
-        const count = req.query.count === undefined ? 1 : parseInt(req.query.count)
+        const partition = parseInt(req.params.partition, 10)
+        const count = req.query.count === undefined ? 1 : parseInt(req.query.count, 10)
         const wrapperOption = req.query.wrapper || 'array'
         const contentOption = req.query.content || 'string'
 
@@ -75,7 +77,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
     })
 
     router.get('/streams/:id/data/partitions/:partition/from', (req, res) => {
-        const partition = parseInt(req.params.partition)
+        const partition = parseInt(req.params.partition, 10)
         const wrapper = req.query.wrapper || 'array'
         const content = req.query.content || 'string'
         const fromTimestamp = parseIntIfExists(req.query.fromTimestamp)
@@ -114,7 +116,7 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
     })
 
     router.get('/streams/:id/data/partitions/:partition/range', (req, res) => {
-        const partition = parseInt(req.params.partition)
+        const partition = parseInt(req.params.partition, 10)
         const wrapper = req.query.wrapper || 'array'
         const content = req.query.content || 'string'
         const fromTimestamp = parseIntIfExists(req.query.fromTimestamp)
@@ -137,8 +139,8 @@ module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) =>
             })
         } else if (toTimestamp === undefined) {
             res.status(400).send({
-                error: 'Query parameter "toTimestamp" required as well. To request all messages since a timestamp,' +
-                    'use the endpoint /streams/:id/data/partitions/:partition/from',
+                error: 'Query parameter "toTimestamp" required as well. To request all messages since a timestamp,'
+                    + 'use the endpoint /streams/:id/data/partitions/:partition/from',
             })
         } else if (Number.isNaN(toTimestamp)) {
             res.status(400).send({

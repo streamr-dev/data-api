@@ -17,6 +17,7 @@ module.exports = (streamFetcher, permission = 'read') => (req, res, next) => {
             })
             return
         }
+
         if (apiKeyHeaderValid) {
             authKey = req.headers.authorization
                 .substring(6)

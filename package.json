@@ -1,6 +1,6 @@
 {
   "name": "streamr-data-api",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "description": "",
   "main": "data-api.js",
   "directories": {
@@ -10,7 +10,7 @@
     "test": "jest --detectOpenHandles",
     "test-unit": "jest --detectOpenHandles test/unit",
     "test-integration": "jest --detectOpenHandles test/integration",
-    "eslint": "eslint ."
+    "eslint": "eslint . --fix"
   },
   "author": "Streamr <contact@streamr.com>",
   "license": "",
@@ -39,6 +39,7 @@
     "eslint": "^6.0.1",
     "eslint-config-airbnb": "^17.1.1",
     "eslint-config-streamr": "^1.1.7",
+    "eslint-config-streamr-nodejs": "^1.1.0",
     "eslint-loader": "^2.2.1",
     "eslint-plugin-import": "^2.10.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
