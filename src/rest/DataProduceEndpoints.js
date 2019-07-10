@@ -6,14 +6,13 @@ const InvalidMessageContentError = require('../errors/InvalidMessageContentError
 const FailedToPublishError = require('../errors/FailedToPublishError')
 const NotReadyError = require('../errors/NotReadyError')
 const TimestampUtil = require('../utils/TimestampUtil')
-const VolumeLogger = require('../utils/VolumeLogger')
 
 const authenticationMiddleware = require('./RequestAuthenticatorMiddleware')
 
 /**
  * Endpoint for POSTing data to streams
  */
-module.exports = (streamFetcher, publisher, volumeLogger = new VolumeLogger(0)) => {
+module.exports = (streamFetcher, publisher) => {
     if (!streamFetcher) {
         throw new Error('No StreamFetcher given! Must use: new StreamrDataApi(streamrUrl)')
     }
@@ -22,12 +21,7 @@ module.exports = (streamFetcher, publisher, volumeLogger = new VolumeLogger(0)) 
         throw new Error('Publisher not given!')
     }
 
-    if (!volumeLogger) {
-        throw new Error('VolumeLogger not given!')
-    }
-
     const router = express.Router()
-    this.volumeLogger = volumeLogger
 
     router.post(
         '/streams/:id/data',

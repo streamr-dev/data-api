@@ -2,6 +2,10 @@
   "name": "streamr-data-api",
   "version": "1.0.1",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:streamr-dev/data-api.git"
+  },
   "main": "data-api.js",
   "directories": {
     "test": "test"
@@ -33,6 +37,7 @@
     "qs": "^6.7.0",
     "redis": "^2.6.2",
     "sc-uws": "^10.148.2",
+    "streamr-client": "^2.1.1",
     "streamr-client-protocol": "^2.2.5"
   },
   "devDependencies": {

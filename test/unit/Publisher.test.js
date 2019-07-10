@@ -40,6 +40,10 @@ describe('Publisher', () => {
         publisher = new Publisher(kafkaMock, partitionerMock)
     })
 
+    afterEach(() => {
+        publisher.stop()
+    })
+
     describe('publish', () => {
         it('should return a promise', () => {
             const promise = publisher.publish(stream, streamMessageUnsigned).catch(() => {})

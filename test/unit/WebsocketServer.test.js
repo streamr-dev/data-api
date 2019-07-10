@@ -172,6 +172,7 @@ describe('WebsocketServer', () => {
 
     afterEach(() => {
         mockSocket.disconnect()
+        server.stop()
     })
 
     describe('on socket connection', () => {

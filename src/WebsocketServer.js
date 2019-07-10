@@ -68,6 +68,10 @@ module.exports = class WebsocketServer extends events.EventEmitter {
         this.streams = {}
     }
 
+    stop() {
+        this.volumeLogger.stop()
+    }
+
     handlePublishRequest(connection, request) {
         const streamId = request.getStreamId()
         this.streamFetcher.authenticate(streamId, request.apiKey, request.sessionToken, 'write')

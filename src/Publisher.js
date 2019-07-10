@@ -16,6 +16,10 @@ module.exports = class Publisher {
         })
     }
 
+    stop() {
+        this.volumeLogger.stop()
+    }
+
     getStreamPartition(stream, partitionKey) {
         return this.partitioner.partition(stream.partitions, partitionKey)
     }
