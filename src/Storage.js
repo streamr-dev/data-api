@@ -126,7 +126,7 @@ class Storage {
 }
 
 function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 const startCassandraStorage = async (contactPoints, localDataCenter, keyspace, username, password) => {

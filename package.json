@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "jest --detectOpenHandles",
-    "test-unit": "jest test/unit",
-    "test-integration": "jest --detectOpenHandles --forceExit test/integration",
+    "test-unit": "jest --detectOpenHandles test/unit",
+    "test-integration": "jest --detectOpenHandles test/integration",
     "eslint": "eslint ."
   },
   "author": "Streamr <contact@streamr.com>",
@@ -27,10 +27,9 @@
     "debug": "*",
     "express": "^4.14.0",
     "kafka-node": "^1.0.2",
-    "lolex": "^1.5.1",
     "memoizee": "^0.4.4",
     "merge2": "^1.2.3",
-    "node-fetch": "^1.6.3",
+    "node-fetch": "^2.6.0",
     "node-uuid": "^1.4.8",
     "optimist": "*",
     "qs": "^6.7.0",

@@ -19,6 +19,10 @@ describe('MessageCache', () => {
         cache = new MessageCache('streamId', MIN_SIZE, HARD_MAX, HINT_TIMEOUT, resender)
     })
 
+    afterEach(() => {
+        cache.clear()
+    })
+
     function msg(data, counter) {
         return {
             [constants.COUNTER_KEY]: counter,

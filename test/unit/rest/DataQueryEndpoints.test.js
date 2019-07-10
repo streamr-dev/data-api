@@ -101,7 +101,7 @@ describe('DataQueryEndpoints', () => {
         describe('GET /api/v1/streams/streamId/data/partitions/0/last', () => {
             it('responds 200 and Content-Type JSON', (done) => {
                 const res = testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                console.log(res)
+
                 res
                     .expect('Content-Type', /json/)
                     .expect(200, done)

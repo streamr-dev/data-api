@@ -150,5 +150,12 @@ module.exports = class MessageCache {
     size() {
         return this.messages.length
     }
+
+    clear() {
+        if (this.hintTimeouts) {
+            Object.keys(this.hintTimeouts).forEach((id) => clearInterval(this.hintTimeouts[id]))
+            // this.hintTimeouts.forEach((hintTimeout) => clearInterval(hintTimeout))
+        }
+    }
 }
 
