@@ -31,7 +31,7 @@ module.exports = async (externalConfig) => {
         --port <port>
         --apiKey <apiKey>
         --streamId <streamId>`)
-        .demand(['data-topic', 'zookeeper', 'redis', 'redis-pwd', 'cassandra', 'cassandra-username', 'cassandra-pwd', 'keyspace', 'streamr', 'port', 'apiKey', 'streamId'])
+        .demand(['data-topic', 'zookeeper', 'redis', 'redis-pwd', 'cassandra', 'cassandra-username', 'cassandra-pwd', 'keyspace', 'streamr', 'port'])
         .argv)
 
     // Create some utils
