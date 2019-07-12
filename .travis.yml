@@ -14,6 +14,9 @@ env:
   - secure: CSrSw40I7k+k3Un86gEcpNbobBziwET6lhmg/IepVO3McH0NfMJlfOYJCpQ7AXs+hXCrKS2umK6Y6fvKtd5WwVzslGBCH01W/kpl0mxUJLAR8ZGCeQ4FTGBS5tXjVTp6ySrrYZYihCEZgFg42bHZpsrkpWjjpwnaYI6lLdLjYkVM/QNQzG2dJsWn4bseImFvYwiKpufiYIoCB6AkQUkkbkQroPCTGPjMqgIOtDig0trlLve/raKndnYp09AM1IIDiO825pYSAudcf5AVQNhtfKPpvxKnTrVg7g4KDELig2rLlTxAoskYh6UL0Gqj4AceYAj/sFPbZlGd6Qt4yng+jfjJ5S5+IVkDrabQOLWPM1qowsK1G9dL8IyIAp+wEqJqHkKG6cFVryyvvJpgMhdj2D91r1mhbjgGqP8os7bV9c4UHCRNpwgm3c1xDtJ7caeDULSLCOZOWAeo7LPOpqSOeQWmS5kqnFKthSdoDFY6Upm9R03PSnnisWFxk63lyu26756+/0AOMsFog6LbBaPqIggbgj+uzItl01L64+jqggT8D3q5RdX1ujy+6YhF9UtMKTlc8gBeQJrYcGipbI6FebyoXKWiUvE/eCiibJ5Q3GsLjn7Lj1BXpiHgOj61otOmg/HaETvk0DxCaJ4uIV2cdjabz44IYm0bVl0Ww/pNp6g=
 jobs:
   include:
+  - stage: eslint
+    script:
+      - npm run eslint
   - stage: Unit tests
     script:
     - npm run test-unit

@@ -1,4 +1,5 @@
 const assert = require('assert')
+
 const partitioner = require('../../src/Partitioner')
 
 describe('partitioner', () => {

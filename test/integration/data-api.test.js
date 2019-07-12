@@ -1,6 +1,8 @@
 const assert = require('assert')
+
 const fetch = require('node-fetch')
 const WebSocket = require('sc-uws')
+
 const createDataApi = require('../../data-api')
 
 const port = 12345

@@ -1,8 +1,10 @@
 const { Readable } = require('stream')
+
 const express = require('express')
 const request = require('supertest')
 const sinon = require('sinon')
 const { StreamMessage, StreamMessageV30, MessageRef } = require('streamr-client-protocol').MessageLayer
+
 const restEndpointRouter = require('../../../src/rest/DataQueryEndpoints')
 const HttpError = require('../../../src/errors/HttpError')
 
@@ -101,7 +103,7 @@ describe('DataQueryEndpoints', () => {
         describe('GET /api/v1/streams/streamId/data/partitions/0/last', () => {
             it('responds 200 and Content-Type JSON', (done) => {
                 const res = testGetRequest('/api/v1/streams/streamId/data/partitions/0/last')
-                console.log(res)
+
                 res
                     .expect('Content-Type', /json/)
                     .expect(200, done)
@@ -361,8 +363,8 @@ describe('DataQueryEndpoints', () => {
                 testGetRequest('/api/v1/streams/streamId/data/partitions/0/range?fromTimestamp=1')
                     .expect('Content-Type', /json/)
                     .expect(400, {
-                        error: 'Query parameter "toTimestamp" required as well. To request all messages since a timestamp,' +
-                            'use the endpoint /streams/:id/data/partitions/:partition/from',
+                        error: 'Query parameter "toTimestamp" required as well. To request all messages since a timestamp,'
+                            + 'use the endpoint /streams/:id/data/partitions/:partition/from',
                     }, done)
             })
             it('responds 400 and error message if optional param "toTimestamp" not a number', (done) => {

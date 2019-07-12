@@ -1,29 +1,27 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
+
 const InvalidMessageContentError = require('../errors/InvalidMessageContentError')
 const FailedToPublishError = require('../errors/FailedToPublishError')
 const NotReadyError = require('../errors/NotReadyError')
 const TimestampUtil = require('../utils/TimestampUtil')
-const VolumeLogger = require('../utils/VolumeLogger')
+
 const authenticationMiddleware = require('./RequestAuthenticatorMiddleware')
 
 /**
  * Endpoint for POSTing data to streams
  */
-module.exports = (streamFetcher, publisher, volumeLogger = new VolumeLogger(0)) => {
+module.exports = (streamFetcher, publisher) => {
     if (!streamFetcher) {
         throw new Error('No StreamFetcher given! Must use: new StreamrDataApi(streamrUrl)')
     }
+
     if (!publisher) {
         throw new Error('Publisher not given!')
     }
-    if (!volumeLogger) {
-        throw new Error('VolumeLogger not given!')
-    }
 
     const router = express.Router()
-    this.volumeLogger = volumeLogger
 
     router.post(
         '/streams/:id/data',
@@ -51,7 +49,7 @@ module.exports = (streamFetcher, publisher, volumeLogger = new VolumeLogger(0)) 
             let signatureType
 
             function parseInteger(n) {
-                const parsed = parseInt(n)
+                const parsed = parseInt(n, 10)
                 if (!Number.isInteger(parsed) || parsed < 0) {
                     throw new Error(`${n} is not a valid positive integer`)
                 }

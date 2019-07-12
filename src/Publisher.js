@@ -1,4 +1,5 @@
 const debug = require('debug')('Publisher')
+
 const MessageNotSignedError = require('./errors/MessageNotSignedError')
 const NotReadyError = require('./errors/NotReadyError')
 const VolumeLogger = require('./utils/VolumeLogger')
@@ -13,6 +14,10 @@ module.exports = class Publisher {
             this.kafkaReady = true
             debug('Kafka is ready')
         })
+    }
+
+    stop() {
+        this.volumeLogger.stop()
     }
 
     getStreamPartition(stream, partitionKey) {

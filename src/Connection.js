@@ -1,4 +1,5 @@
 const events = require('events')
+
 const debug = require('debug')('Connection')
 const qs = require('qs')
 const { ErrorResponse } = require('streamr-client-protocol').ControlLayer
@@ -16,8 +17,8 @@ module.exports = class Connection extends events.EventEmitter {
         if (parts.length === 2) {
             const queryObj = qs.parse(parts[1])
             if (queryObj.controlLayerVersion && queryObj.messageLayerVersion) {
-                this.controlLayerVersion = parseInt(queryObj.controlLayerVersion)
-                this.messageLayerVersion = parseInt(queryObj.messageLayerVersion)
+                this.controlLayerVersion = parseInt(queryObj.controlLayerVersion, 10)
+                this.messageLayerVersion = parseInt(queryObj.messageLayerVersion, 10)
             }
         }
     }

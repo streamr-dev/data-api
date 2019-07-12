@@ -1,9 +1,12 @@
 const { Readable } = require('stream')
 const assert = require('assert')
 const events = require('events')
+
 const sinon = require('sinon')
 const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
+
 const WebsocketServer = require('../../src/WebsocketServer')
+
 const MockSocket = require('./test-helpers/MockSocket')
 
 describe('WebsocketServer', () => {
@@ -169,6 +172,7 @@ describe('WebsocketServer', () => {
 
     afterEach(() => {
         mockSocket.disconnect()
+        server.stop()
     })
 
     describe('on socket connection', () => {

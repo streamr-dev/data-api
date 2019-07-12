@@ -1,6 +1,7 @@
 const fetch = require('node-fetch')
 const memoize = require('memoizee')
 const debug = require('debug')('StreamFetcher')
+
 const AuthorizationHeaderUtil = require('./utils/AuthorizationHeaderUtil')
 const HttpError = require('./errors/HttpError')
 

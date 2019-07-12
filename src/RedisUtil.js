@@ -1,4 +1,5 @@
 const events = require('events')
+
 const redis = require('redis')
 const debug = require('debug')('RedisUtil')
 const { StreamMessageFactory } = require('streamr-client-protocol').MessageLayer

@@ -1,4 +1,5 @@
 const { Readable, Transform } = require('stream')
+
 const merge2 = require('merge2')
 const cassandra = require('cassandra-driver')
 const { StreamMessageFactory } = require('streamr-client-protocol').MessageLayer
@@ -11,8 +12,8 @@ class Storage {
     }
 
     store(streamMessage) {
-        const insertStatement = 'INSERT INTO stream_data (id, partition, ts, sequence_no, publisher_id, msg_chain_id, payload) ' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?)'
+        const insertStatement = 'INSERT INTO stream_data (id, partition, ts, sequence_no, publisher_id, msg_chain_id, payload) '
+            + 'VALUES (?, ?, ?, ?, ?, ?, ?)'
         return this.cassandraClient.execute(insertStatement, [
             streamMessage.getStreamId(),
             streamMessage.getStreamPartition(),
@@ -66,10 +67,10 @@ class Storage {
     fetchFromMessageRefForPublisher(streamId, streamPartition, fromMsgRef, publisherId, msgChainId) {
         // Cassandra doesn't allow ORs in WHERE clause so we need to do 2 queries.
         // Once a range (id/partition/ts/sequence_no) has been selected in Cassandra, filtering it by publisher_id requires to ALLOW FILTERING.
-        const query1 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts = ? AND sequence_no >= ? AND publisher_id = ? ' +
-            'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
-        const query2 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts > ? AND publisher_id = ? ' +
-            'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
+        const query1 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts = ? AND sequence_no >= ? AND publisher_id = ? '
+            + 'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
+        const query2 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts > ? AND publisher_id = ? '
+            + 'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
         const queryParams1 = [streamId, streamPartition, fromMsgRef.timestamp, fromMsgRef.sequenceNumber, publisherId, msgChainId]
         const queryParams2 = [streamId, streamPartition, fromMsgRef.timestamp, publisherId, msgChainId]
         const stream1 = this._queryWithStreamingResults(query1, queryParams1)
@@ -81,6 +82,7 @@ class Storage {
         if (!Number.isInteger(from)) {
             throw new Error('from is not an integer')
         }
+
         if (!Number.isInteger(to)) {
             throw new Error('to is not an integer')
         }
@@ -93,12 +95,12 @@ class Storage {
     fetchBetweenMessageRefsForPublisher(streamId, streamPartition, fromMsgRef, toMsgRef, publisherId, msgChainId) {
         // Cassandra doesn't allow ORs in WHERE clause so we need to do 3 queries.
         // Once a range (id/partition/ts/sequence_no) has been selected in Cassandra, filtering it by publisher_id requires to ALLOW FILTERING.
-        const query1 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts = ? AND sequence_no >= ? AND publisher_id = ? ' +
-            'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
-        const query2 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts > ? AND ts < ? AND publisher_id = ? ' +
-            'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
-        const query3 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts = ? AND sequence_no <= ? AND publisher_id = ? ' +
-            'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
+        const query1 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts = ? AND sequence_no >= ? AND publisher_id = ? '
+            + 'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
+        const query2 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts > ? AND ts < ? AND publisher_id = ? '
+            + 'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
+        const query3 = 'SELECT * FROM stream_data WHERE id = ? AND partition = ? AND ts = ? AND sequence_no <= ? AND publisher_id = ? '
+            + 'AND msg_chain_id = ? ORDER BY ts ASC, sequence_no ASC ALLOW FILTERING'
         const queryParams1 = [streamId, streamPartition, fromMsgRef.timestamp, fromMsgRef.sequenceNumber, publisherId, msgChainId]
         const queryParams2 = [streamId, streamPartition, fromMsgRef.timestamp, toMsgRef.timestamp, publisherId, msgChainId]
         const queryParams3 = [streamId, streamPartition, toMsgRef.timestamp, toMsgRef.sequenceNumber, publisherId, msgChainId]
@@ -126,7 +128,7 @@ class Storage {
 }
 
 function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 const startCassandraStorage = async (contactPoints, localDataCenter, keyspace, username, password) => {
