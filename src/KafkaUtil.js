@@ -11,7 +11,9 @@ module.exports = class KafkaUtil extends events.EventEmitter {
         super()
         this.dataTopic = dataTopic
         this.partitioner = partitioner
-        this.kafkaClient = kafkaClient || new kafka.KafkaClient(zookeeper, `streamr-kafka-producer-${Date.now()}`)
+        this.kafkaClient = kafkaClient || new kafka.KafkaClient({
+            kafkaHost: zookeeper
+        }, `streamr-kafka-producer-${Date.now()}`)
 
         this.kafkaClient.on('ready', () => {
             debug('Kafka client is ready. Refreshing metadata for data topic: %s', this.dataTopic)

@@ -14,7 +14,7 @@ RUN apk add --update python build-base && npm install && apk del python build-ba
 EXPOSE 8890
 
 # Default environment variables
-ENV ZOOKEEPER_HOST zookeeper
+ENV ZOOKEEPER_HOST zookeeper:9092
 ENV KAFKA_TOPIC data-dev
 ENV REDIS_HOST redis
 ENV REDIS_PASSWORD ""

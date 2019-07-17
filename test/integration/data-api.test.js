@@ -16,7 +16,7 @@ describe('data-api', () => {
         // Start the app
         dataApi = await createDataApi({
             'data-topic': 'data-dev',
-            zookeeper: 'localhost',
+            zookeeper: 'localhost:9092',
             redis: 'localhost',
             'redis-pwd': 'not-set',
             cassandra: 'localhost',
