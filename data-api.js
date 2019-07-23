@@ -30,7 +30,8 @@ module.exports = async (externalConfig) => {
         --streamr <streamr>
         --port <port>
         --apiKey <apiKey>
-        --streamId <streamId>`)
+        --streamId <streamId>
+        --nodeId <nodeId>`)
         .demand(['data-topic', 'zookeeper', 'redis', 'redis-pwd', 'cassandra', 'cassandra-username', 'cassandra-pwd', 'keyspace', 'streamr', 'port'])
         .argv)
 
@@ -42,7 +43,7 @@ module.exports = async (externalConfig) => {
         config['cassandra-username'], config['cassandra-pwd'],
     )
     const kafka = new StreamrKafkaProducer(config['data-topic'], Partitioner, config.zookeeper)
-    const volumeLogger = new VolumeLogger(`data-api:${config.port}`, 60, config.apiKey, config.streamId)
+    const volumeLogger = new VolumeLogger(config.nodeId ? config.nodeId : `data-api:${config.port}`, 60, config.apiKey, config.streamId)
     const publisher = new Publisher(kafka, Partitioner, volumeLogger)
 
     // Create HTTP server

@@ -10,12 +10,15 @@ module.exports = class VolumeLogger {
         this.outBytes = 0
         this.lastVolumeStatistics = {}
         this.id = id
-        this.client = new StreamrClient({
-            auth: {
-                apiKey
-            }
-        })
-        this.streamId = streamId
+
+        if (apiKey && streamId) {
+            this.client = new StreamrClient({
+                auth: {
+                    apiKey
+                }
+            })
+            this.streamId = streamId
+        }
 
         if (this.reportingIntervalSeconds > 0) {
             this.interval = setInterval(() => {
@@ -67,13 +70,11 @@ module.exports = class VolumeLogger {
         this.inBytes = 0
         this.outBytes = 0
 
-        this._sendReport({
-            'data-api': this.lastVolumeStatistics
-        })
+        this._sendReport(this.lastVolumeStatistics)
     }
 
     _sendReport(data) {
-        if (this.client instanceof StreamrClient && this.streamId !== undefined) {
+        if (this.client) {
             this.client.publish(this.streamId, data)
         }
     }
