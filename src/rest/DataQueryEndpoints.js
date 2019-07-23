@@ -4,7 +4,7 @@
 const express = require('express')
 const { MessageRef } = require('streamr-client-protocol').MessageLayer
 
-const VolumeLogger = require('../utils/VolumeLogger')
+const MetricsLoggerConsole = require('../utils/MetricsLoggerConsole')
 
 const authenticationMiddleware = require('./RequestAuthenticatorMiddleware')
 
@@ -34,7 +34,7 @@ function parseIntIfExists(x) {
     return x === undefined ? undefined : parseInt(x, 10)
 }
 
-module.exports = (storage, streamFetcher, volumeLogger = new VolumeLogger(0)) => {
+module.exports = (storage, streamFetcher, volumeLogger = new MetricsLoggerConsole(0)) => {
     const router = express.Router()
 
     router.use(

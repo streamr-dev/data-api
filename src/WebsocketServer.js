@@ -7,7 +7,7 @@ const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
 const Stream = require('./Stream')
 const Connection = require('./Connection')
 const HttpError = require('./errors/HttpError')
-const VolumeLogger = require('./utils/VolumeLogger')
+const MetricsLoggerConsole = require('./utils/MetricsLoggerConsole')
 
 const { StreamMessage } = MessageLayer
 
@@ -16,7 +16,7 @@ function getStreamLookupKey(streamId, streamPartition) {
 }
 
 module.exports = class WebsocketServer extends events.EventEmitter {
-    constructor(wss, realtimeAdapter, storage, streamFetcher, publisher, volumeLogger = new VolumeLogger(0)) {
+    constructor(wss, realtimeAdapter, storage, streamFetcher, publisher, volumeLogger = new MetricsLoggerConsole(0)) {
         super()
         this.wss = wss
         this.realtimeAdapter = realtimeAdapter
@@ -40,7 +40,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
 
         this.wss.on('connection', (socket) => {
             debug('connection established: %o', socket)
-            this.volumeLogger.connectionCount += 1
+            this.volumeLogger.addConnection()
 
             const connection = new Connection(socket)
 
@@ -60,7 +60,7 @@ module.exports = class WebsocketServer extends events.EventEmitter {
             })
 
             socket.on('close', () => {
-                this.volumeLogger.connectionCount -= 1
+                this.volumeLogger.removeConnection()
                 this.handleDisconnect(connection)
             })
         })

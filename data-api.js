@@ -12,7 +12,9 @@ const { startCassandraStorage } = require('./src/Storage')
 const StreamrKafkaProducer = require('./src/KafkaUtil')
 const Partitioner = require('./src/Partitioner')
 const Publisher = require('./src/Publisher')
-const VolumeLogger = require('./src/utils/VolumeLogger')
+const MetricsLoggerConsole = require('./src/utils/MetricsLoggerConsole')
+const MetricsLoggerStream = require('./src/utils/MetricsLoggerStream')
+const MetricsLoggerMulti = require('./src/utils/MetricsLoggerMulti')
 const dataQueryEndpoints = require('./src/rest/DataQueryEndpoints')
 const dataProduceEndpoints = require('./src/rest/DataProduceEndpoints')
 const volumeEndpoint = require('./src/rest/VolumeEndpoint')
@@ -35,6 +37,12 @@ module.exports = async (externalConfig) => {
         .demand(['data-topic', 'zookeeper', 'redis', 'redis-pwd', 'cassandra', 'cassandra-username', 'cassandra-pwd', 'keyspace', 'streamr', 'port'])
         .argv)
 
+    // Metrics loggers
+    const nodeId = config.nodeId ? config.nodeId : `data-api:${config.port}`
+    const consoleLogger = new MetricsLoggerConsole(60, nodeId)
+    const streamLogger = new MetricsLoggerStream(3, nodeId, config.apiKey, config.streamId)
+    const combinedLogger = new MetricsLoggerMulti([consoleLogger, streamLogger])
+
     // Create some utils
     const streamFetcher = new StreamFetcher(config.streamr)
     const redis = new RedisUtil(config.redis.split(','), config['redis-pwd'])
@@ -43,8 +51,7 @@ module.exports = async (externalConfig) => {
         config['cassandra-username'], config['cassandra-pwd'],
     )
     const kafka = new StreamrKafkaProducer(config['data-topic'], Partitioner, config.zookeeper)
-    const volumeLogger = new VolumeLogger(config.nodeId ? config.nodeId : `data-api:${config.port}`, 60, config.apiKey, config.streamId)
-    const publisher = new Publisher(kafka, Partitioner, volumeLogger)
+    const publisher = new Publisher(kafka, Partitioner, combinedLogger)
 
     // Create HTTP server
     const app = express()
@@ -76,13 +83,13 @@ module.exports = async (externalConfig) => {
         storage,
         streamFetcher,
         publisher,
-        volumeLogger,
+        combinedLogger
     )
 
     // Rest endpoints
-    app.use('/api/v1', dataQueryEndpoints(storage, streamFetcher, volumeLogger))
-    app.use('/api/v1', dataProduceEndpoints(streamFetcher, publisher, volumeLogger))
-    app.use('/api/v1', volumeEndpoint(volumeLogger))
+    app.use('/api/v1', dataQueryEndpoints(storage, streamFetcher, combinedLogger))
+    app.use('/api/v1', dataProduceEndpoints(streamFetcher, publisher, combinedLogger))
+    app.use('/api/v1', volumeEndpoint(consoleLogger)) // respond from consoleLogger because it is less noisy due to longer interval
 
     // Start the server
     httpServer.listen(config.port, () => {
@@ -102,7 +109,7 @@ module.exports = async (externalConfig) => {
             redis.quit()
             storage.close()
             kafka.close()
-            volumeLogger.stop()
+            combinedLogger.stop()
         },
     }
 }

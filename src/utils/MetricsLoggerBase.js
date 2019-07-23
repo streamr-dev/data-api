@@ -1,30 +1,36 @@
-const StreamrClient = require('streamr-client')
-
-module.exports = class VolumeLogger {
-    constructor(id, reportingIntervalSeconds = 60, apiKey = undefined, streamId = undefined) {
+/**
+ * A metrics logger that logs metrics to console every reportingIntervalSeconds.
+ * Extend this base class and implement the _report(data) method to use some
+ * other medium for logging.
+ */
+module.exports = class MetricsLoggerBase {
+    constructor(reportingIntervalSeconds = 60, id) {
         this.reportingIntervalSeconds = reportingIntervalSeconds
+        this.id = id
         this.connectionCount = 0
         this.inCount = 0
         this.inBytes = 0
         this.outCount = 0
         this.outBytes = 0
-        this.lastVolumeStatistics = {}
-        this.id = id
-
-        if (apiKey && streamId) {
-            this.client = new StreamrClient({
-                auth: {
-                    apiKey
-                }
-            })
-            this.streamId = streamId
-        }
+        this._lastVolumeStatistics = {}
 
         if (this.reportingIntervalSeconds > 0) {
             this.interval = setInterval(() => {
-                this.reportAndReset()
+                this._reportAndReset()
             }, this.reportingIntervalSeconds * 1000)
         }
+    }
+
+    getLastVolumeStatistics() {
+        return this._lastVolumeStatistics
+    }
+
+    addConnection() {
+        this.connectionCount += 1
+    }
+
+    removeConnection() {
+        this.connectionCount -= 1
     }
 
     logInput(bytes) {
@@ -37,21 +43,14 @@ module.exports = class VolumeLogger {
         this.outBytes += bytes
     }
 
-    reportAndReset() {
+    _reportAndReset() {
         const inPerSecond = this.inCount / this.reportingIntervalSeconds
         const outPerSecond = this.outCount / this.reportingIntervalSeconds
         const kbInPerSecond = (this.inBytes / this.reportingIntervalSeconds) / 1000
         const kbOutPerSecond = (this.outBytes / this.reportingIntervalSeconds) / 1000
 
-        const msg = `Connections: ${this.connectionCount}, Messages in/sec: ${inPerSecond < 10 ? inPerSecond.toFixed(1) : Math.round(inPerSecond)},`
-                    + ` Messages out/sec: ${outPerSecond < 10 ? outPerSecond.toFixed(1) : Math.round(outPerSecond)}`
-
-        console.log(msg)
-
-        this.lastVolumeStatistics = {
+        this._lastVolumeStatistics = {
             id: this.id,
-            lastMsg: msg,
-            timestamp: Date.now(),
             numOfOpenWebsockets: this.connectionCount,
             input: {
                 eventsPerSecond: Math.round(inPerSecond),
@@ -60,9 +59,7 @@ module.exports = class VolumeLogger {
             output: {
                 eventsPerSecond: Math.round(outPerSecond),
                 kbPerSecond: Math.round(kbOutPerSecond),
-            },
-            inPerSecond: inPerSecond < 10 ? inPerSecond.toFixed(1) : Math.round(inPerSecond),
-            outPerSecond: outPerSecond < 10 ? outPerSecond.toFixed(1) : Math.round(outPerSecond)
+            }
         }
 
         this.inCount = 0
@@ -70,17 +67,16 @@ module.exports = class VolumeLogger {
         this.inBytes = 0
         this.outBytes = 0
 
-        this._sendReport(this.lastVolumeStatistics)
+        this._report(this._lastVolumeStatistics)
     }
 
-    _sendReport(data) {
-        if (this.client) {
-            this.client.publish(this.streamId, data)
-        }
+    // eslint-disable-next-line class-methods-use-this
+    _report(data) {
+        console.error('Implement _report(data) in subclass!')
     }
 
     stop() {
-        console.log('VolumeLogger stopping.')
+        console.log('Metrics logger stopping.')
         clearInterval(this.interval)
     }
 }

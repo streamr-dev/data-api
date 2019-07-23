@@ -2,10 +2,10 @@ const debug = require('debug')('Publisher')
 
 const MessageNotSignedError = require('./errors/MessageNotSignedError')
 const NotReadyError = require('./errors/NotReadyError')
-const VolumeLogger = require('./utils/VolumeLogger')
+const MetricsLoggerConsole = require('./utils/MetricsLoggerConsole')
 
 module.exports = class Publisher {
-    constructor(kafka, partitioner, volumeLogger = new VolumeLogger(0)) {
+    constructor(kafka, partitioner, volumeLogger = new MetricsLoggerConsole(0)) {
         this.kafka = kafka
         this.partitioner = partitioner
         this.volumeLogger = volumeLogger

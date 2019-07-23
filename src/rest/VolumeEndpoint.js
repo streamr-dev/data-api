@@ -11,7 +11,7 @@ module.exports = (volumeLogger) => {
     const router = express.Router()
 
     router.get('/volume', (req, res) => {
-        res.status(200).send(volumeLogger.lastVolumeStatistics)
+        res.status(200).send(volumeLogger.getLastVolumeStatistics())
     })
 
     return router
