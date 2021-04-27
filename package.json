@@ -35,7 +35,7 @@
     "node-uuid": "^1.4.8",
     "optimist": "*",
     "qs": "^6.7.0",
-    "redis": "^2.6.2",
+    "redis": "^3.1.1",
     "sc-uws": "^10.148.2",
     "streamr-client": "^2.1.1",
     "streamr-client-protocol": "^2.2.5"
